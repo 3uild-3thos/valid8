@@ -1,0 +1,28 @@
+{
+  "networks": {},
+  "programs": {
+    "HC2oqz2p6DEWfrahenqdq2moUcga9c9biqRBcdK3XKU1": {
+      "pubkey": "HC2oqz2p6DEWfrahenqdq2moUcga9c9biqRBcdK3XKU1",
+      "network": "devnet",
+      "lamports": 1398960,
+      "data": "AgAAAL1krsjnXHCBp0IrN//3IPqJdQyvUqV84aoUPP0Do28O",
+      "owner": "BPFLoaderUpgradeab1e11111111111111111111111",
+      "executable": true,
+      "rent_epoch": 18446744073709551615
+    }
+  },
+  "accounts": {
+    "5JhBq7jvX4dGKXz9s3g8bMEW71puu28xUMYu8VtW66mc": {
+      "pubkey": "5JhBq7jvX4dGKXz9s3g8bMEW71puu28xUMYu8VtW66mc",
+      "network": "devnet",
+      "lamports": 1468560,
+      "data": "P01+w19q03gnAAAAc3VpenpsZQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8tvsHu9tTtEyWVxyMwGT9xSqqCFxz1KRAkCoFs/HifY=",
+      "owner": "HC2oqz2p6DEWfrahenqdq2moUcga9c9biqRBcdK3XKU1",
+      "executable": false,
+      "rent_epoch": 18446744073709551615
+    }
+  },
+  "idls": [
+    "HC2oqz2p6DEWfrahenqdq2moUcga9c9biqRBcdK3XKU1"
+  ]
+}

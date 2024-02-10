@@ -1,0 +1,25 @@
+use anyhow::Result;
+use dialoguer::Input;
+use solana_program::pubkey::Pubkey;
+use std::str::FromStr;
+
+use crate::{ common::network, context::Valid8Context };
+
+pub fn command(ctx: &mut Valid8Context) -> Result<()> {
+    let network = network::command()?;
+    
+    let mut address: Option<Pubkey> = None;
+    while address.is_none() {
+        let address_string: String = Input::new()
+            .with_prompt("Account address")
+            .interact_text()?;
+
+        match Pubkey::from_str(&address_string) {
+            Ok(p) => address = Some(p),
+            Err(_) => println!("Invalid address: {}. Please enter a valid base58-encoeded Solana address.", &address_string)
+        }
+    }
+
+    let pubkey = address.expect("This will never fail");
+    ctx.add_account(&network, &pubkey)
+}
