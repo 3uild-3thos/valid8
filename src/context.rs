@@ -28,7 +28,7 @@ use crate::common::{
 
 const CONFIG_PATH: &str = "./valid8.json";
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct Valid8Context {
     pub networks: HashMap<String, Network>,
     pub programs: HashMap<String, AccountSchema>,
@@ -36,16 +36,16 @@ pub struct Valid8Context {
     pub idls: HashSet<String>,
 }
 
-impl Default for Valid8Context {
-    fn default() -> Self {
-        Self {
-            networks: HashMap::new(),
-            programs: HashMap::new(),
-            idls: HashSet::new(),
-            accounts: HashMap::new()
-        }
-    }
-}
+// impl Default for Valid8Context {
+//     fn default() -> Self {
+//         Self {
+//             networks: HashMap::new(),
+//             programs: HashMap::new(),
+//             idls: HashSet::new(),
+//             accounts: HashMap::new()
+//         }
+//     }
+// }
 
 impl Valid8Context {
     pub fn init() -> Result<Valid8Context>{
@@ -64,28 +64,41 @@ impl Valid8Context {
     }
 
     pub fn try_save(&self) -> Result<()> {
-        let path = Path::new(CONFIG_PATH);
-        let mut f = File::create(path)?;
+        // let path = Path::new(CONFIG_PATH);
+        // let mut f = File::create(path)?;
         let pretty_string = serde_json::to_string_pretty(&self)?;
-        f.write_all(pretty_string.as_bytes())?;
+        // f.write_all(pretty_string.as_bytes())?;
+        File::create(Path::new(CONFIG_PATH))
+            .and_then(|mut file|file.write_all(pretty_string.as_bytes()))?;
         Ok(())
     }
 
     pub fn try_open() -> Result<Self> {
-        let path = Path::new(CONFIG_PATH);
-        match File::open(path) {
-            Ok(mut f) => {
-                let mut buf = vec![];
-                f.read_to_end(&mut buf)?;
-                let ctx: Valid8Context = serde_json::from_slice(&buf)?;
-                Ok(ctx)
-            },
-            Err(_) => {
-                let ctx = Valid8Context::default();
-                ctx.try_save()?;
-                Ok(ctx)
-            }
+        // let path = Path::new(CONFIG_PATH);
+
+        if let Ok(mut file) = File::open(Path::new(CONFIG_PATH)) {
+            let mut buf = vec![];
+            file.read_to_end(&mut buf)?;
+            let ctx: Valid8Context = serde_json::from_slice(&buf)?;
+            Ok(ctx)
+        } else {
+            let ctx = Valid8Context::default();
+            ctx.try_save()?;
+            Ok(ctx)
         }
+        // match File::open(path) {
+        //     Ok(mut f) => {
+        //         let mut buf = vec![];
+        //         f.read_to_end(&mut buf)?;
+        //         let ctx: Valid8Context = serde_json::from_slice(&buf)?;
+        //         Ok(ctx)
+        //     },
+        //     Err(_) => {
+        //         let ctx = Valid8Context::default();
+        //         ctx.try_save()?;
+        //         Ok(ctx)
+        //     }
+        // }
     }
 
     pub fn has_account(&self, pubkey: &Pubkey) -> bool {
@@ -120,12 +133,15 @@ impl Valid8Context {
                 clone_program(&account)?;
             
                 // Get IDL address
-                match clone_idl(&account) {
-                    Ok(_) => {
-                        self.add_idl(&program_id)?
-                    },
-                    Err(_) => ()
+                if let Ok(_) = clone_idl(&account) {
+                    self.add_idl(&program_id)?
                 }
+                // match clone_idl(&account) {
+                //     Ok(_) => {
+                //         self.add_idl(&program_id)?
+                //     },
+                //     Err(_) => ()
+                // }
             }
         }
         // Save program account

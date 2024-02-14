@@ -58,9 +58,13 @@ impl Serialize for Network {
 
 impl<'de> Deserialize<'de> for Network {
     fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
-        let v = String::deserialize(d)?;
-        Network::from_str(&v)
-            .map_err(serde::de::Error::custom)
+        String::deserialize(d)
+            .and_then(|v| Network::from_str(&v)
+            .map_err(serde::de::Error::custom))
+
+        // let v = String::deserialize(d)?;
+        // Network::from_str(&v)
+        //     .map_err(serde::de::Error::custom)
     }
 }
 

@@ -26,7 +26,7 @@ pub fn fetch_idl_schema(network: &Network, pubkey: &Pubkey) -> Result<Vec<u8>> {
     let mut d: &[u8] = &data[8..];
     let idl_account: IdlAccount = AnchorDeserialize::deserialize(&mut d)?;
 
-    let compressed_len: usize = idl_account.data_len.try_into().unwrap();
+    let compressed_len: usize = idl_account.data_len.try_into()?;
     let compressed_bytes = &data[44..44 + compressed_len];
     let mut z = ZlibDecoder::new(compressed_bytes);
     let mut s = Vec::new();
@@ -86,7 +86,10 @@ pub fn save_idl(pubkey: &Pubkey, data: &Vec<u8>) -> Result<()> {
 }
 
 pub fn save_program(pubkey: &Pubkey, data: &Vec<u8>) -> Result<()> {
-    let mut f = File::create(Path::new(&format!("./.valid8/{}.so", pubkey)))?;
-    f.write_all(&data)?;
+    File::create(Path::new(&format!("./.valid8/{}.so", pubkey)))
+        .and_then(|mut file| file.write_all(&data))?;
+
+    // let mut f = File::create(Path::new(&format!("./.valid8/{}.so", pubkey)))?;
+    // f.write_all(&data)?;
     Ok(())
 }
