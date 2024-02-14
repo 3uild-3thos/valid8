@@ -60,7 +60,7 @@ impl Valid8Context {
                 clone_idl(&p)?;
             }
             Ok(())
-        }).collect::<Result<()>>();
+        }).collect::<Vec<Result<()>>>();
         Ok(())
     }
 
