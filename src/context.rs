@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, HashSet}, path::Path, io::{Read, Write}, fs::File};
 use anchor_lang::accounts::program;
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde::{Serialize, Deserialize};
 use solana_program::pubkey::Pubkey;
@@ -54,12 +54,10 @@ impl Valid8Context {
     }
 
     pub fn install(&self) -> Result<()> {
-        self.programs.values().collect::<Vec<&AccountSchema>>().into_par_iter().for_each(|p| {
-            let _ = clone_program(&p);
-            if self.idls.contains(&p.get_address().to_string()) {
-                let _ = clone_idl(&p);
-            }
-        });
+        let _ = self.programs.values().collect::<Vec<&AccountSchema>>().into_par_iter().map(|p| {
+            clone_program(&p)
+                .and_then(|_| clone_idl(&p))
+        }).collect::<Result<()>>();
         Ok(())
     }
 
