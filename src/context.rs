@@ -55,8 +55,11 @@ impl Valid8Context {
 
     pub fn install(&self) -> Result<()> {
         let _ = self.programs.values().collect::<Vec<&AccountSchema>>().into_par_iter().map(|p| {
-            clone_program(&p)
-                .and_then(|_| clone_idl(&p))
+            clone_program(&p)?;
+            if self.idls.contains(&p.get_address().to_string()) {
+                clone_idl(&p)?;
+            }
+            Ok(())
         }).collect::<Result<()>>();
         Ok(())
     }
