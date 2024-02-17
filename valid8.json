@@ -9,6 +9,15 @@
       "owner": "BPFLoaderUpgradeab1e11111111111111111111111",
       "executable": true,
       "rent_epoch": 18446744073709551615
+    },
+    "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8": {
+      "pubkey": "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
+      "network": "mainnet",
+      "lamports": 1141440,
+      "data": "AgAAAIdnJOr8Zo4xtYrybRNhir9qQfk6LqWlPPPo6sR5xjpW",
+      "owner": "BPFLoaderUpgradeab1e11111111111111111111111",
+      "executable": true,
+      "rent_epoch": 18446744073709551615
     }
   },
   "accounts": {

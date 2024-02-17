@@ -7,8 +7,8 @@ use crate::{
     context::Valid8Context
 };
 
-pub fn command(ctx: &mut Valid8Context) -> Result<()> {
-    let network = network::command()?;
+pub fn clone(ctx: &mut Valid8Context) -> Result<()> {
+    let network = network::get()?;
     let mut program_id: Option<Pubkey> = None;
     while program_id.is_none() {
         let program_id_string: String = Input::new()

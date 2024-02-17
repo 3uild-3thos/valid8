@@ -3,7 +3,7 @@ use dialoguer::Select;
 
 use crate::{program, account, context::Valid8Context};
 
-pub fn command(ctx: &mut Valid8Context) -> Result<()> {
+pub fn edit(ctx: &mut Valid8Context) -> Result<()> {
     let items = vec![
         "Clone Program",
         "Edit Program", 
@@ -12,17 +12,17 @@ pub fn command(ctx: &mut Valid8Context) -> Result<()> {
     ];
 
     let selection = Select::new()
-        .with_prompt("Select an option")
+        .with_prompt("Select an option, or press Esc to exit.")
         .items(&items)
         .interact_opt()?;
 
     if let Some(n) = selection {
         match n {
-            0 => program::clone::command(ctx)?,
+            0 => program::clone(ctx)?,
             1 => todo!(), //program::edit::command()?,
-            2 => account::clone::command(ctx)?,
+            2 => account::clone(ctx)?,
             3 => todo!(), // account::edit::command()?,
-            _ => todo!()
+            _ => {}
         }
     }
 

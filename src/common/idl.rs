@@ -4,6 +4,7 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 // use serde_json::Value;
 use solana_program::{pubkey::Pubkey, hash::hash};
 use anchor_lang::anchor_syn::idl::types::{Idl, IdlTypeDefinition};
+
 pub type Discriminator = [u8;8];
 pub type DiscriminatorMap = HashMap<[u8;8], IdlTypeDefinition>;
 

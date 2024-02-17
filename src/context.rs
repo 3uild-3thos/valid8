@@ -1,16 +1,12 @@
-use std::{collections::{HashMap, HashSet}, path::Path, io::{Read, Write}, fs::File};
+use std::{collections::{HashMap, HashSet}, fs::{create_dir_all, File}, io::{Read, Write}, path::Path, str::FromStr};
 use anchor_lang::accounts::program;
 use anyhow::{anyhow, Result};
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
 use serde::{Serialize, Deserialize};
 use solana_program::pubkey::Pubkey;
 
 use crate::common::{
-    helpers::create_resources_dir, 
-    AccountSchema, 
-    Network, 
-    fetch_account,
-    clone_program, clone_idl
+    clone_idl, clone_program, fetch_account, project_name::ProjectName, AccountSchema, Network
 };
 
 /*
@@ -26,31 +22,39 @@ use crate::common::{
 
 */
 
-const CONFIG_PATH: &str = "./valid8.json";
-
 #[derive(Serialize, Deserialize, Default)]
 pub struct Valid8Context {
+    pub project_name: ProjectName,
     pub networks: HashMap<String, Network>,
     pub programs: HashMap<String, AccountSchema>,
     pub accounts: HashMap<String, AccountSchema>,
     pub idls: HashSet<String>,
 }
 
-// impl Default for Valid8Context {
-//     fn default() -> Self {
-//         Self {
-//             networks: HashMap::new(),
-//             programs: HashMap::new(),
-//             idls: HashSet::new(),
-//             accounts: HashMap::new()
-//         }
-//     }
-// }
-
 impl Valid8Context {
-    pub fn init() -> Result<Valid8Context>{
-        create_resources_dir()?;
-        Valid8Context::try_open()
+
+    pub fn init(name: Option<String>) -> Result<Valid8Context>{
+        let mut project_name = ProjectName::default();
+        if let Some(name) =  name {
+            project_name = ProjectName::from_str(&name)?;
+        }
+        
+        if let Ok(config) = Self::try_open_config(&project_name) {
+            Ok(config)
+        } else {
+            Self::try_init_config(&project_name)
+        }
+
+    }
+
+    pub fn create_resources_dir(project_name: &ProjectName) -> Result<()> {
+        create_dir_all(Path::new(&project_name.to_resources()))?;
+        Ok(())
+    }
+
+    pub fn create_project_config(project_name: &ProjectName) -> Result<File> {
+        let file = File::create(Path::new(&project_name.to_config()))?;
+        Ok(file)
     }
 
     pub fn install(&self) -> Result<()> {
@@ -64,42 +68,34 @@ impl Valid8Context {
         Ok(())
     }
 
-    pub fn try_save(&self) -> Result<()> {
-        // let path = Path::new(CONFIG_PATH);
-        // let mut f = File::create(path)?;
+    pub fn try_init_config(project_name: &ProjectName) -> Result<Self> {
+        let mut ctx = Valid8Context::default();
+        ctx.project_name = project_name.clone();
+        let pretty_string = serde_json::to_string_pretty(&ctx)?;
+
+        // Create resources dir for this project
+        Self::create_resources_dir(&project_name)
+            // Create config for project
+            .and_then(|_| Self::create_project_config(&project_name))
+            // Write config to file
+            .and_then(|mut file| Ok(file.write_all(pretty_string.as_bytes())))??;
+
+        Ok(ctx)
+    }
+
+    pub fn try_save_config(&self) -> Result<()> {
         let pretty_string = serde_json::to_string_pretty(&self)?;
-        // f.write_all(pretty_string.as_bytes())?;
-        File::create(Path::new(CONFIG_PATH))
+        File::open(Path::new(&self.project_name.to_config()))
             .and_then(|mut file|file.write_all(pretty_string.as_bytes()))?;
         Ok(())
     }
 
-    pub fn try_open() -> Result<Self> {
-        // let path = Path::new(CONFIG_PATH);
-
-        if let Ok(mut file) = File::open(Path::new(CONFIG_PATH)) {
-            let mut buf = vec![];
-            file.read_to_end(&mut buf)?;
-            let ctx: Valid8Context = serde_json::from_slice(&buf)?;
-            Ok(ctx)
-        } else {
-            let ctx = Valid8Context::default();
-            ctx.try_save()?;
-            Ok(ctx)
-        }
-        // match File::open(path) {
-        //     Ok(mut f) => {
-        //         let mut buf = vec![];
-        //         f.read_to_end(&mut buf)?;
-        //         let ctx: Valid8Context = serde_json::from_slice(&buf)?;
-        //         Ok(ctx)
-        //     },
-        //     Err(_) => {
-        //         let ctx = Valid8Context::default();
-        //         ctx.try_save()?;
-        //         Ok(ctx)
-        //     }
-        // }
+    pub fn try_open_config(project_name: &ProjectName) -> Result<Self> {
+        let mut buf = vec![];
+        File::open(Path::new(&project_name.to_config()))
+            .and_then(|mut file| file.read_to_end(&mut buf))?;
+        let ctx: Valid8Context = serde_json::from_slice(&buf)?;
+        Ok(ctx)
     }
 
     pub fn has_account(&self, pubkey: &Pubkey) -> bool {
@@ -137,17 +133,11 @@ impl Valid8Context {
                 if let Ok(_) = clone_idl(&account) {
                     self.add_idl(&program_id)?
                 }
-                // match clone_idl(&account) {
-                //     Ok(_) => {
-                //         self.add_idl(&program_id)?
-                //     },
-                //     Err(_) => ()
-                // }
             }
         }
         // Save program account
 
-        self.try_save()
+        self.try_save_config()
     }
 
     pub fn add_account(&mut self, network: &Network, pubkey: &Pubkey) -> Result<()> {
@@ -167,7 +157,7 @@ impl Valid8Context {
         self.accounts.insert(pubkey.to_string(), account.clone());
 
         match self.has_program(&account.owner) {
-            true => self.try_save(),
+            true => self.try_save_config(),
             false => self.add_program_unchecked(&network, &account.owner)
         }
     }

@@ -1,13 +1,14 @@
 use std::{str::FromStr, fmt::Display};
-use serde::{ser::Serialize, de::Deserialize, Serializer, Deserializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use anyhow::{Result, Error};
 use dialoguer::{Input, Select};
 use solana_client::rpc_client::RpcClient;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub enum Network {
     Mainnet,
     Devnet,
+    #[default]
     Local,
     Custom(String)
 }
@@ -61,14 +62,10 @@ impl<'de> Deserialize<'de> for Network {
         String::deserialize(d)
             .and_then(|v| Network::from_str(&v)
             .map_err(serde::de::Error::custom))
-
-        // let v = String::deserialize(d)?;
-        // Network::from_str(&v)
-        //     .map_err(serde::de::Error::custom)
     }
 }
 
-pub fn command() -> Result<Network> {
+pub fn get() -> Result<Network> {
     let mut items = vec!["Mainnet Beta", "Devnet"];
     // TODO: Push any custom networks defined in our JSON file
     items.push("Custom");

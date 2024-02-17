@@ -1,5 +1,6 @@
 use anyhow::Result;
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
+use common::ProjectName;
 use context::Valid8Context;
 
 mod account;
@@ -11,43 +12,38 @@ mod serialization;
 
 const APP_NAME: &str = "Valid8";
 
-#[derive(Parser)]
+#[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
-    #[command(subcommand)]
+    // #[command(subcommand)]
     command: Option<Commands>,
+    // ProjectName
+    name: Option<String>
 }
 
-#[derive(Subcommand)]
+#[derive(Debug, Clone, ValueEnum)]
 enum Commands {
-    Init,
     Install,
     Run,
 }
 
-fn main() {
-    let mut ctx = match Valid8Context::init() {
-        Ok(c) => c,
-        Err(e) => return eprintln!("{}", e)
-    };
+fn main() -> Result<()> {
+    let cli = Cli::parse();
+    let mut ctx = Valid8Context::init(cli.name.clone())?;
 
-    match router(&mut ctx) {
-        Ok(_) => (),
-        Err(e) => eprintln!("{}", e)
-    }
+    router(&cli, &mut ctx)
+
 }
 
-fn router(ctx: &mut Valid8Context) -> Result<()> {
-    let cli = Cli::parse();
+fn router(cli: &Cli, ctx: &mut Valid8Context) -> Result<()> {
 
     if let Some(c) = &cli.command {
         match c {
-            Commands::Init => commands::init::command(ctx)?,
-            Commands::Install => commands::install::command(ctx)?,
+            Commands::Install => commands::install(ctx)?,
             Commands::Run => todo!()
         }
     } else {
-        commands::edit::command(ctx)?
+        commands::edit(ctx)?
     }
 
     Ok(())
