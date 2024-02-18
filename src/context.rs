@@ -6,7 +6,7 @@ use serde::{Serialize, Deserialize};
 use solana_program::pubkey::Pubkey;
 
 use crate::common::{
-    clone_idl, clone_program, fetch_account, project_name::ProjectName, AccountSchema, Network
+    helpers, project_name::ProjectName, AccountSchema, Network
 };
 
 /*
@@ -58,10 +58,15 @@ impl Valid8Context {
     }
 
     pub fn install(&self) -> Result<()> {
+
+        // Check if project already installed on local workspace
+
+
+
         let _ = self.programs.values().collect::<Vec<&AccountSchema>>().into_par_iter().map(|p| {
-            clone_program(&p)?;
-            if self.idls.contains(&p.get_address().to_string()) {
-                clone_idl(&p)?;
+            helpers::clone_program(&self, &p)?;
+            if self.idls.contains(&p.get_pubkey().to_string()) {
+                helpers::clone_idl(&self, &p)?;
             }
             Ok(())
         }).collect::<Vec<Result<()>>>();
@@ -85,7 +90,7 @@ impl Valid8Context {
 
     pub fn try_save_config(&self) -> Result<()> {
         let pretty_string = serde_json::to_string_pretty(&self)?;
-        File::open(Path::new(&self.project_name.to_config()))
+        File::create(Path::new(&self.project_name.to_config()))
             .and_then(|mut file|file.write_all(pretty_string.as_bytes()))?;
         Ok(())
     }
@@ -117,7 +122,7 @@ impl Valid8Context {
 
     pub fn add_program_unchecked(&mut self, network: &Network, program_id: &Pubkey) -> Result<()> {
         // Get program account
-        let account = fetch_account(&network, &program_id)?;
+        let account = helpers::fetch_account(&self, &network, &program_id)?;
 
         match program_id.to_string().as_ref() {
             "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" => {
@@ -127,10 +132,10 @@ impl Valid8Context {
                 self.programs.insert(address.to_string(), account.clone());
 
                 // Clone program data
-                clone_program(&account)?;
+                helpers::clone_program(&self, &account)?;
             
                 // Get IDL address
-                if let Ok(_) = clone_idl(&account) {
+                if let Ok(_) = helpers::clone_idl(&self, &account) {
                     self.add_idl(&program_id)?
                 }
             }
@@ -151,7 +156,8 @@ impl Valid8Context {
 
     pub fn add_account_unchecked(&mut self, network: &Network, pubkey: &Pubkey) -> Result<()> {
         // Get account
-        let account = fetch_account(&network, &pubkey)?;
+        let mut account = helpers::fetch_account(&self, &network, &pubkey)?;
+        // let account_bin = helpers::save_account(&self.project_name, pubkey, account.data)?;
 
         // Save program account
         self.accounts.insert(pubkey.to_string(), account.clone());

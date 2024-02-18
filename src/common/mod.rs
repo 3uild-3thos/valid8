@@ -16,5 +16,5 @@ pub use project_name::*;
 // pub mod account_editor;
 // pub use account_editor::*;
 
-// pub mod idl;
-// pub use idl::*;
+pub mod idl;
+pub use idl::*;

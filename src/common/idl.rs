@@ -25,6 +25,6 @@ pub fn open_idl(pubkey: &Pubkey) -> Result<Idl> {
 //     Ok(map)
 // }
 
-pub fn get_account_schema(idl: DiscriminatorMap) -> Result<IdlTypeDefinition> {
-    idl.get_key_value(k)
-}
+// pub fn get_account_schema(idl: DiscriminatorMap) -> Result<IdlTypeDefinition> {
+//     idl.get_key_value(k)
+// }

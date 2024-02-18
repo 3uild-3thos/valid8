@@ -20,6 +20,6 @@ pub fn clone(ctx: &mut Valid8Context) -> Result<()> {
             Err(_) => println!("Invalid address: {}. Please enter a valid base58-encoeded Solana address.", &program_id_string)
         }
     }
-    let pubkey = program_id.ok_or(anyhow!("Public key not defined"))?;// .expect("Public key not defined"); // This will never fail    
+    let pubkey = program_id.ok_or(anyhow!("Public key not defined"))?;   
     ctx.add_program(&network, &pubkey)
 }

@@ -1,37 +1,30 @@
 {
+  "project_name": {
+    "name": "valid8"
+  },
   "networks": {},
   "programs": {
-    "HC2oqz2p6DEWfrahenqdq2moUcga9c9biqRBcdK3XKU1": {
-      "pubkey": "HC2oqz2p6DEWfrahenqdq2moUcga9c9biqRBcdK3XKU1",
-      "network": "devnet",
-      "lamports": 1398960,
-      "data": "AgAAAL1krsjnXHCBp0IrN//3IPqJdQyvUqV84aoUPP0Do28O",
+    "p1exdMJcjVao65QdewkaZRUnU6VPSXhus9n2GzWfh98": {
+      "pubkey": "p1exdMJcjVao65QdewkaZRUnU6VPSXhus9n2GzWfh98",
+      "network": "mainnet",
+      "lamports": 1141440,
+      "data": null,
+      "data_path": ".valid8/p1exdMJcjVao65QdewkaZRUnU6VPSXhus9n2GzWfh98",
       "owner": "BPFLoaderUpgradeab1e11111111111111111111111",
       "executable": true,
       "rent_epoch": 18446744073709551615
     },
-    "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8": {
-      "pubkey": "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
+    "27haf8L6oxUeXrHrgEgsexjSY5hbVUWEmvv9Nyxg8vQv": {
+      "pubkey": "27haf8L6oxUeXrHrgEgsexjSY5hbVUWEmvv9Nyxg8vQv",
       "network": "mainnet",
       "lamports": 1141440,
-      "data": "AgAAAIdnJOr8Zo4xtYrybRNhir9qQfk6LqWlPPPo6sR5xjpW",
+      "data": null,
+      "data_path": ".valid8/27haf8L6oxUeXrHrgEgsexjSY5hbVUWEmvv9Nyxg8vQv",
       "owner": "BPFLoaderUpgradeab1e11111111111111111111111",
       "executable": true,
       "rent_epoch": 18446744073709551615
     }
   },
-  "accounts": {
-    "5JhBq7jvX4dGKXz9s3g8bMEW71puu28xUMYu8VtW66mc": {
-      "pubkey": "5JhBq7jvX4dGKXz9s3g8bMEW71puu28xUMYu8VtW66mc",
-      "network": "devnet",
-      "lamports": 1468560,
-      "data": "P01+w19q03gnAAAAc3VpenpsZQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8tvsHu9tTtEyWVxyMwGT9xSqqCFxz1KRAkCoFs/HifY=",
-      "owner": "HC2oqz2p6DEWfrahenqdq2moUcga9c9biqRBcdK3XKU1",
-      "executable": false,
-      "rent_epoch": 18446744073709551615
-    }
-  },
-  "idls": [
-    "HC2oqz2p6DEWfrahenqdq2moUcga9c9biqRBcdK3XKU1"
-  ]
+  "accounts": {},
+  "idls": []
 }

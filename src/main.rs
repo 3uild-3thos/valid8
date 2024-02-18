@@ -18,18 +18,19 @@ struct Cli {
     // #[command(subcommand)]
     command: Option<Commands>,
     // ProjectName
-    name: Option<String>
+    project_name: Option<String>
 }
 
 #[derive(Debug, Clone, ValueEnum)]
 enum Commands {
     Install,
+    Edit,
     Run,
 }
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    let mut ctx = Valid8Context::init(cli.name.clone())?;
+    let mut ctx = Valid8Context::init(cli.project_name.clone())?;
 
     router(&cli, &mut ctx)
 
@@ -40,7 +41,8 @@ fn router(cli: &Cli, ctx: &mut Valid8Context) -> Result<()> {
     if let Some(c) = &cli.command {
         match c {
             Commands::Install => commands::install(ctx)?,
-            Commands::Run => todo!()
+            Commands::Run => todo!(),
+            Commands::Edit => commands::edit(ctx)?,
         }
     } else {
         commands::edit(ctx)?
