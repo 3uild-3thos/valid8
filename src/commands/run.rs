@@ -1,14 +1,18 @@
 use anyhow::Result;
 use dialoguer::Select;
+use anyhow::anyhow;
 
-use crate::{program, account, context::Valid8Context};
+use crate::{program, account, context::Valid8Context, commands};
 
-pub fn edit(ctx: &mut Valid8Context) -> Result<()> {
+
+pub fn run(ctx: &mut Valid8Context) -> Result<()> {
     let items = vec![
-        "Clone program",
-        "Clone account",
+        "Clone Program",
+        "Clone Account",
         "Edit Program", 
-        "Edit Account"
+        "Edit Account",
+        "Compose Configs",
+        "Generate Custom Ledger"
     ];
 
     let selection = Select::new()
@@ -22,7 +26,9 @@ pub fn edit(ctx: &mut Valid8Context) -> Result<()> {
             1 => account::clone(ctx)?,
             2 => program::edit(ctx)?,
             3 => account::edit(ctx)?,
-            _ => {}
+            4 => commands::compose(ctx)?,
+            5 => commands::ledger(ctx, &None)?,
+            _ => return Err(anyhow!("Invalid option."))
         }
     }
 

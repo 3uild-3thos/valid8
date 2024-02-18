@@ -1,37 +1,60 @@
 {
-  "networks": {},
-  "programs": {
-    "HC2oqz2p6DEWfrahenqdq2moUcga9c9biqRBcdK3XKU1": {
-      "pubkey": "HC2oqz2p6DEWfrahenqdq2moUcga9c9biqRBcdK3XKU1",
-      "network": "devnet",
-      "lamports": 1398960,
-      "data": "AgAAAL1krsjnXHCBp0IrN//3IPqJdQyvUqV84aoUPP0Do28O",
-      "owner": "BPFLoaderUpgradeab1e11111111111111111111111",
-      "executable": true,
-      "rent_epoch": 18446744073709551615
-    },
-    "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8": {
-      "pubkey": "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
-      "network": "mainnet",
-      "lamports": 1141440,
-      "data": "AgAAAIdnJOr8Zo4xtYrybRNhir9qQfk6LqWlPPPo6sR5xjpW",
-      "owner": "BPFLoaderUpgradeab1e11111111111111111111111",
-      "executable": true,
-      "rent_epoch": 18446744073709551615
-    }
+  "project_name": {
+    "name": "valid8"
   },
-  "accounts": {
-    "5JhBq7jvX4dGKXz9s3g8bMEW71puu28xUMYu8VtW66mc": {
-      "pubkey": "5JhBq7jvX4dGKXz9s3g8bMEW71puu28xUMYu8VtW66mc",
-      "network": "devnet",
-      "lamports": 1468560,
-      "data": "P01+w19q03gnAAAAc3VpenpsZQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8tvsHu9tTtEyWVxyMwGT9xSqqCFxz1KRAkCoFs/HifY=",
-      "owner": "HC2oqz2p6DEWfrahenqdq2moUcga9c9biqRBcdK3XKU1",
-      "executable": false,
-      "rent_epoch": 18446744073709551615
+  "networks": [
+    "devnet",
+    "mainnet"
+  ],
+  "programs": [
+    [
+      "HEvSKofvBgfaexv23kMabbYqxasxU3mQ4ibBMEmJWHny",
+      "devnet"
+    ],
+    [
+      "ZETAxsqBRek56DhiGXrn75yj2NHU3aYUnxvHXpkf3aD",
+      "mainnet"
+    ]
+  ],
+  "accounts": [
+    [
+      "ACLUjkKX1vue2boShd6FUvPevwSsGrJMoJFhJKvpGzsu",
+      "mainnet"
+    ],
+    [
+      "GBPVXoHVntfK6fMAWrDqEWDQgfR6KnUP6n65tVJMembN",
+      "devnet"
+    ],
+    [
+      "9fdKm3kucGsgGaFnTqXPkF8GxTNTfcFjH5aLcZNvHxPw",
+      "mainnet"
+    ],
+    [
+      "H4qEuH77udFPZQnJnsK1g9bydLXCJoVPcXGkTcNh3eKF",
+      "mainnet"
+    ],
+    [
+      "99B2bTijsU6f1GCT73HmdR7HCFFjGMBcPZY6jZ96ynrR",
+      "devnet"
+    ],
+    [
+      "6TDapMxCnEzss5YCJZXZtTSHwe6ZJeWikwvPzLnZvq7m",
+      "devnet"
+    ]
+  ],
+  "overrides": [
+    {
+      "pubkey": "H4qEuH77udFPZQnJnsK1g9bydLXCJoVPcXGkTcNh3eKF",
+      "edit_fields": [
+        {
+          "Owner": "HEvSKofvBgfaexv23kMabbYqxasxU3mQ4ibBMEmJWHny"
+        }
+      ]
     }
-  },
+  ],
   "idls": [
-    "HC2oqz2p6DEWfrahenqdq2moUcga9c9biqRBcdK3XKU1"
-  ]
+    "HEvSKofvBgfaexv23kMabbYqxasxU3mQ4ibBMEmJWHny",
+    "ZETAxsqBRek56DhiGXrn75yj2NHU3aYUnxvHXpkf3aD"
+  ],
+  "compose": "test.json"
 }

@@ -10,11 +10,14 @@ impl ProjectName {
     pub const DEFAULT: &'static str = "valid8";
 
     pub fn to_config(&self) -> String {
-        String::from(format!("{}.json", self.name))
+        format!("{}.json", self.name)
     }
     pub fn to_resources(&self) -> String {
-        String::from(format!(".{}/", self.name))
+        format!(".{}/", self.name)
     }
+    // pub fn to_ledger_path(&self) -> String {
+    //     format!("{}{}_ledger", self.to_resources(), self.name)
+    // }
 }
 
 impl Default for ProjectName {
