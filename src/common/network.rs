@@ -1,10 +1,12 @@
-use std::{str::FromStr, fmt::Display};
+use std::{collections::HashSet, fmt::Display, ops::Deref, str::FromStr};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use anyhow::{Result, Error};
 use dialoguer::{Input, Select};
 use solana_client::rpc_client::RpcClient;
 
-#[derive(Debug, Clone, Default)]
+use crate::context::Valid8Context;
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Network {
     Mainnet,
     Devnet,
@@ -65,11 +67,15 @@ impl<'de> Deserialize<'de> for Network {
     }
 }
 
-pub fn get() -> Result<Network> {
-    let mut items = vec!["Mainnet Beta", "Devnet"];
+pub fn get(ctx: &Valid8Context) -> Result<Network> {
+    let mut items: Vec<String> = vec!["mainnet".into(), "devnet".into(), "custom".into(), "exit".into()];
     // TODO: Push any custom networks defined in our JSON file
-    items.push("Custom");
-    items.push("Exit");
+    // berg: like this? 
+    for network in ctx.networks.iter() {
+        if !items.contains(&network.to_string()) {
+            items.push(network.to_string())
+        }
+    }
     let selection = Select::new()
         .with_prompt("Select a network")
         .items(&items)
@@ -79,8 +85,13 @@ pub fn get() -> Result<Network> {
         0 => Ok(Network::Mainnet),
         1 => Ok(Network::Devnet),
         2 => custom_network(),
-        _ => return Err(Error::msg("Invalid network selection"))
-    }
+        3 => Err(Error::msg("Exit")),
+        _ => if items.len() > selection {
+            Ok(Network::Custom(items[selection].clone()))
+        } else {
+            Err(Error::msg("Invalid network selection"))
+        }
+    }   
 }
 
 pub fn custom_network() -> Result<Network> {

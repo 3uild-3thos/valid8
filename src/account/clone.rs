@@ -6,7 +6,7 @@ use std::str::FromStr;
 use crate::{ common::network, context::Valid8Context };
 
 pub fn clone(ctx: &mut Valid8Context) -> Result<()> {
-    let network = network::get()?;
+    let network = network::get(&ctx)?;
     
     let mut address: Option<Pubkey> = None;
     while address.is_none() {

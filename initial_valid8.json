@@ -1,0 +1,18 @@
+{
+  "project_name": {
+    "name": "valid8"
+  },
+  "networks": {},
+  "programs": {
+    "p1exdMJcjVao65QdewkaZRUnU6VPSXhus9n2GzWfh98": {
+      "pubkey": "p1exdMJcjVao65QdewkaZRUnU6VPSXhus9n2GzWfh98",
+      "network": "mainnet"
+    },
+    "27haf8L6oxUeXrHrgEgsexjSY5hbVUWEmvv9Nyxg8vQv": {
+      "pubkey": "27haf8L6oxUeXrHrgEgsexjSY5hbVUWEmvv9Nyxg8vQv",
+      "network": "mainnet"
+    }
+  },
+  "accounts": {},
+  "idls": ["27haf8L6oxUeXrHrgEgsexjSY5hbVUWEmvv9Nyxg8vQv"]
+}

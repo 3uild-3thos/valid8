@@ -1,7 +1,7 @@
-use std::{collections::{HashMap, HashSet}, fs::{create_dir_all, File}, io::{Read, Write}, path::Path, str::FromStr};
+use std::{collections::HashSet, fs::{create_dir_all, File}, io::{Read, Write}, path::Path, str::FromStr};
 use anchor_lang::accounts::program;
-use anyhow::{anyhow, Result};
-use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
+use anyhow::Result;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde::{Serialize, Deserialize};
 use solana_program::pubkey::Pubkey;
 
@@ -22,13 +22,62 @@ use crate::common::{
 
 */
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, Debug, Clone)]
 pub struct Valid8Context {
     pub project_name: ProjectName,
-    pub networks: HashMap<String, Network>,
-    pub programs: HashMap<String, AccountSchema>,
-    pub accounts: HashMap<String, AccountSchema>,
-    pub idls: HashSet<String>,
+    pub networks: HashSet<Network>,
+    pub programs: Vec<AccountSchema>,
+    pub accounts: Vec<AccountSchema>,
+    pub idls: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Default, Debug)]
+pub struct ConfigJson {
+    pub project_name: ProjectName,
+    pub networks: HashSet<Network>,
+    pub programs: Vec<(String, Network)>,
+    pub accounts: Vec<(String, Network)>,
+    pub idls: Vec<String>,
+}
+
+impl From<Valid8Context> for ConfigJson {
+    fn from(value: Valid8Context) -> Self {
+
+        let programs: Vec<(String, Network)> = value.programs.iter().map(|a_s| {
+            let _ = helpers::save_account_to_disc(&value.project_name, &a_s);
+            (a_s.pubkey.to_string(), a_s.network.clone())
+        }).collect();
+
+        let accounts: Vec<(String, Network)> = value.accounts.iter().map(|a_s| {
+            let _ = helpers::save_account_to_disc(&value.project_name, &a_s);
+            (a_s.pubkey.to_string(), a_s.network.clone())
+        }).collect();
+
+        Self {
+            project_name: value.project_name,
+            networks: value.networks,
+            programs,
+            accounts,
+            idls: value.idls,
+        }
+    }
+}
+
+impl From<ConfigJson> for Valid8Context {
+    fn from(value: ConfigJson) -> Self {
+
+        // Try to read accounts from disc, or return with default empty vector
+        let programs = value.programs.iter().map(|(pubkey, _)| helpers::read_account_from_disc(&value.project_name, pubkey)).collect::<Result<Vec<AccountSchema>>>().unwrap_or_default();
+        let accounts = value.accounts.iter().map(|(pubkey, _)| helpers::read_account_from_disc(&value.project_name, pubkey)).collect::<Result<Vec<AccountSchema>>>().unwrap_or_default();
+        
+        Self { 
+            project_name: value.project_name,
+            networks: value.networks,
+            programs: programs,
+            accounts: accounts,
+            idls: value.idls,
+        }
+    }
 }
 
 impl Valid8Context {
@@ -40,11 +89,11 @@ impl Valid8Context {
         }
         
         if let Ok(config) = Self::try_open_config(&project_name) {
+            println!("{} config found", project_name.to_config());
             Ok(config)
         } else {
             Self::try_init_config(&project_name)
         }
-
     }
 
     pub fn create_resources_dir(project_name: &ProjectName) -> Result<()> {
@@ -63,9 +112,9 @@ impl Valid8Context {
 
 
 
-        let _ = self.programs.values().collect::<Vec<&AccountSchema>>().into_par_iter().map(|p| {
+        let _ = self.programs.iter().collect::<Vec<&AccountSchema>>().into_par_iter().map(|p| {
             helpers::clone_program(&self, &p)?;
-            if self.idls.contains(&p.get_pubkey().to_string()) {
+            if self.idls.contains(&p.pubkey.to_string()) {
                 helpers::clone_idl(&self, &p)?;
             }
             Ok(())
@@ -76,11 +125,11 @@ impl Valid8Context {
     pub fn try_init_config(project_name: &ProjectName) -> Result<Self> {
         let mut ctx = Valid8Context::default();
         ctx.project_name = project_name.clone();
-        let pretty_string = serde_json::to_string_pretty(&ctx)?;
+        let pretty_string = serde_json::to_string_pretty(&ConfigJson::from(ctx.clone()))?;
 
         // Create resources dir for this project
         Self::create_resources_dir(&project_name)
-            // Create config for project
+            // Create config json for project
             .and_then(|_| Self::create_project_config(&project_name))
             // Write config to file
             .and_then(|mut file| Ok(file.write_all(pretty_string.as_bytes())))??;
@@ -89,7 +138,8 @@ impl Valid8Context {
     }
 
     pub fn try_save_config(&self) -> Result<()> {
-        let pretty_string = serde_json::to_string_pretty(&self)?;
+
+        let pretty_string = serde_json::to_string_pretty(&ConfigJson::from(self.clone()))?;
         File::create(Path::new(&self.project_name.to_config()))
             .and_then(|mut file|file.write_all(pretty_string.as_bytes()))?;
         Ok(())
@@ -99,16 +149,19 @@ impl Valid8Context {
         let mut buf = vec![];
         File::open(Path::new(&project_name.to_config()))
             .and_then(|mut file| file.read_to_end(&mut buf))?;
-        let ctx: Valid8Context = serde_json::from_slice(&buf)?;
-        Ok(ctx)
+        let config: ConfigJson = serde_json::from_slice(&buf)?;
+        println!("try open config {:?}", &config);
+
+        // Convert ConfigJson to Valid8Context, this also tries to read accounts from disc
+        Ok(config.into())
     }
 
     pub fn has_account(&self, pubkey: &Pubkey) -> bool {
-        self.accounts.contains_key(&pubkey.to_string())
+        self.accounts.iter().find(|acc| acc.pubkey == *pubkey).is_some() 
     }
 
     pub fn has_program(&self, program_id: &Pubkey) -> bool {
-        self.programs.contains_key(&program_id.to_string())
+        self.programs.iter().find(|acc| acc.pubkey == *program_id).is_some()
     }
 
     pub fn add_program(&mut self, network: &Network, program_id: &Pubkey) -> Result<()> {
@@ -122,14 +175,13 @@ impl Valid8Context {
 
     pub fn add_program_unchecked(&mut self, network: &Network, program_id: &Pubkey) -> Result<()> {
         // Get program account
-        let account = helpers::fetch_account(&self, &network, &program_id)?;
+        let account = helpers::fetch_account(&network, &program_id)?;
 
         match program_id.to_string().as_ref() {
-            "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" => {
-
-            },
-            address => {
-                self.programs.insert(address.to_string(), account.clone());
+            "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" => {  },
+            "11111111111111111111111111111111" => {  },
+            _address => {
+                self.programs.push(account.clone());
 
                 // Clone program data
                 helpers::clone_program(&self, &account)?;
@@ -156,11 +208,11 @@ impl Valid8Context {
 
     pub fn add_account_unchecked(&mut self, network: &Network, pubkey: &Pubkey) -> Result<()> {
         // Get account
-        let mut account = helpers::fetch_account(&self, &network, &pubkey)?;
-        // let account_bin = helpers::save_account(&self.project_name, pubkey, account.data)?;
+        let account = helpers::fetch_account(&network, &pubkey)?;
 
         // Save program account
-        self.accounts.insert(pubkey.to_string(), account.clone());
+        self.accounts.push(account.clone());
+        self.networks.insert(network.clone());
 
         match self.has_program(&account.owner) {
             true => self.try_save_config(),
@@ -169,7 +221,8 @@ impl Valid8Context {
     }
 
     pub fn add_idl(&mut self, program_id: &Pubkey) -> Result<()> {
-        self.idls.insert(program_id.to_string());
+        self.idls.push(program_id.to_string());
         Ok(())
     }
+
 }

@@ -1,14 +1,14 @@
-use std::{fs::File, path::Path, io::{Write, Read}};
-use anyhow::{Result, Error};
+use std::{fs::File, io::{Read, Write}, path::Path, str::FromStr};
+use anyhow::{anyhow, Error, Result};
 use flate2::read::ZlibDecoder;
 use serde::Serialize;
 // use serde_json::Value;
 use anchor_lang::{idl::IdlAccount, AnchorDeserialize};
 use solana_sdk::{
     pubkey::Pubkey,
-    account::Account, 
+    account::{Account}, 
 };
-use borsh::{self, BorshSerialize};
+use borsh::{self, to_vec};
 use crate::context::Valid8Context;
 
 use super::{AccountSchema, Network, ProjectName};
@@ -31,13 +31,11 @@ pub fn fetch_idl_schema(ctx: &Valid8Context, network: &Network, pubkey: &Pubkey)
     Ok(s.to_vec())
 }
 
-pub fn fetch_account(ctx: &Valid8Context, network: &Network, pubkey: &Pubkey) -> Result<AccountSchema> {
+pub fn fetch_account(network: &Network, pubkey: &Pubkey) -> Result<AccountSchema> {
     let client = network.client();
-    let mut account = AccountSchema::from_account(&ctx, client.get_account(&pubkey)?, pubkey)?;
-    account.add_network(network)?;
-    account.add_pubkey(pubkey)?;
+    let account_scema = AccountSchema::from_account( &client.get_account(&pubkey)?, pubkey, network)?;
+    Ok(account_scema)
 
-    Ok(account)
 }
 
 pub fn fetch_account_data(network: &Network, pubkey: &Pubkey) -> Result<Vec<u8>> {
@@ -48,7 +46,7 @@ pub fn fetch_account_data(network: &Network, pubkey: &Pubkey) -> Result<Vec<u8>>
 pub fn clone_program(ctx: &Valid8Context, account: &AccountSchema) -> Result<()> {
     println!("clone_program");
     // Get program executable data address
-    let program_executable_data_address = get_program_executable_data_address(&account)?;
+    let program_executable_data_address = account.get_program_executable_data_address()?;
 
     // Fetch program executable data
     let program_executable_data = fetch_account_data(&account.get_network(), &program_executable_data_address)?;
@@ -75,27 +73,20 @@ pub fn clone_idl(ctx: &Valid8Context, account: &AccountSchema) -> Result<()> {
     }
 }
 
-pub fn get_program_executable_data_address(account: &AccountSchema) -> Result<Pubkey> {
-    println!("get_program_executable_data");
-    let account_data = account.get_data()?;
-    let mut executable_data_bytes = [0u8;32];
-    executable_data_bytes.copy_from_slice(&account_data[4..36]);
-    Ok(Pubkey::new_from_array(executable_data_bytes))
+pub fn save_account_to_disc(project_name: &ProjectName, account_schema: &AccountSchema) -> Result<String> {
+    let account_bytes = bincode::serialize(account_schema)?;
+    File::create(Path::new(&format!("{}{}.bin", project_name.to_resources(), account_schema.pubkey)))
+        .and_then(|mut file| file.write_all(&account_bytes))?;
+    Ok(format!("{}{}", project_name.to_resources(), account_schema.pubkey))
 }
 
-pub fn save_account(project_name: &ProjectName, pubkey: &Pubkey, data: &Vec<u8>) -> Result<String> {
-    println!("save_account");
-    File::create(Path::new(&format!("{}{}", project_name.to_resources(), pubkey)))
-        .and_then(|mut file| file.write_all(data))?;
-    Ok(format!("{}{}", project_name.to_resources(), pubkey))
-}
-
-pub fn read_account(project_name: &ProjectName, pubkey: &Pubkey) -> Result<Vec<u8>> {
-    println!("read_account");
-    let mut data = vec![];
-    File::open(Path::new(&format!("{}{}", project_name.to_resources(), pubkey)))
-        .and_then(|mut file| file.read_to_end(&mut data))?;
-    Ok(data)
+pub fn read_account_from_disc(project_name: &ProjectName, pubkey_str: &str) -> Result<AccountSchema> {
+    let pubkey = Pubkey::from_str(pubkey_str)?;
+    let mut account_bytes = vec![];
+    File::open(Path::new(&format!("{}{}.bin", project_name.to_resources(), pubkey)))
+        .and_then(|mut file| file.read_to_end(&mut account_bytes))?;
+    let account = bincode::deserialize(&account_bytes)?;
+    Ok(account)
 }
 
 pub fn save_idl(project_name: &ProjectName, pubkey: &Pubkey, data: &Vec<u8>) -> Result<()> {
@@ -105,7 +96,6 @@ pub fn save_idl(project_name: &ProjectName, pubkey: &Pubkey, data: &Vec<u8>) -> 
 }
 
 pub fn save_program(project_name: &ProjectName, pubkey: &Pubkey, data: &Vec<u8>) -> Result<()> {
-    println!("save_program");
     File::create(Path::new(&format!("{}{}.so", project_name.to_resources(), pubkey)))
         .and_then(|mut file| file.write_all(&data))?;
     Ok(())

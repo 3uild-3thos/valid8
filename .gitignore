@@ -2,3 +2,4 @@
 target
 .env
 .valid8
+Cargo.lock
