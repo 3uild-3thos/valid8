@@ -1,14 +1,26 @@
-use std::{collections::HashSet, fs::{create_dir_all, File}, io::{Read, Write}, path::Path, str::FromStr};
+use std::{collections::{HashMap, HashSet}, fs::{create_dir_all, File}, io::{Read, Write}, path::Path, str::FromStr};
 use anchor_lang::accounts::program;
 use anyhow::Result;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde::{Serialize, Deserialize};
 use solana_program::pubkey::Pubkey;
+use anyhow::anyhow;
+
+use solana_ledger::{
+    blockstore::create_new_ledger, blockstore_options::LedgerColumnOptions,
+    create_new_tmp_ledger, genesis_utils,
+};
+
+use solana_runtime::{
+    bank_forks::BankForks, genesis_utils::create_genesis_config_with_leader_ex,
+    snapshot_config::SnapshotConfig,
+};
+use solana_sdk::{account::{Account, AccountSharedData}, epoch_schedule::EpochSchedule, fee_calculator::FeeRateGovernor, genesis_config::create_genesis_config, native_token::{sol_to_lamports, LAMPORTS_PER_SOL}, rent::Rent, signature::{write_keypair_file, Keypair}, signer::Signer};
 
 use crate::common::{
     helpers, project_name::ProjectName, AccountSchema, Network
 };
-
+const MAX_GENESIS_ARCHIVE_UNPACKED_SIZE: u64 = 10 * 1024 * 1024; // 10 MiB from testvalidator source
 /*
 
     Valid8Context is responsible for managing configuration, dependencies, overrides and atomically saving these changes to our config file.
@@ -67,8 +79,15 @@ impl From<ConfigJson> for Valid8Context {
     fn from(value: ConfigJson) -> Self {
 
         // Try to read accounts from disc, or return with default empty vector
-        let programs = value.programs.iter().map(|(pubkey, _)| helpers::read_account_from_disc(&value.project_name, pubkey)).collect::<Result<Vec<AccountSchema>>>().unwrap_or_default();
-        let accounts = value.accounts.iter().map(|(pubkey, _)| helpers::read_account_from_disc(&value.project_name, pubkey)).collect::<Result<Vec<AccountSchema>>>().unwrap_or_default();
+        let programs = value.programs.iter()
+            .map(|(pubkey, _)| helpers::read_account_from_disc(&value.project_name, pubkey))
+            .collect::<Result<Vec<AccountSchema>>>()
+            .unwrap_or_default();
+
+        let accounts = value.accounts.iter()
+            .map(|(pubkey, _)| helpers::read_account_from_disc(&value.project_name, pubkey))
+            .collect::<Result<Vec<AccountSchema>>>()
+            .unwrap_or_default();
         
         Self { 
             project_name: value.project_name,
@@ -106,19 +125,20 @@ impl Valid8Context {
         Ok(file)
     }
 
-    pub fn install(&self) -> Result<()> {
+    pub fn install(&mut self) -> Result<()> {
 
         // Check if project already installed on local workspace
 
 
 
-        let _ = self.programs.iter().collect::<Vec<&AccountSchema>>().into_par_iter().map(|p| {
-            helpers::clone_program(&self, &p)?;
-            if self.idls.contains(&p.pubkey.to_string()) {
-                helpers::clone_idl(&self, &p)?;
-            }
-            Ok(())
-        }).collect::<Vec<Result<()>>>();
+        // let _ = self.programs.iter().collect::<Vec<&AccountSchema>>().into_par_iter().map(|p| {
+        //     helpers::clone_program_data(self, &p, &p.network)?;
+        //     self.add_account( &p.network, &p.pubkey);
+        //     if self.idls.contains(&p.pubkey.to_string()) {
+        //         helpers::clone_idl(&self, &p)?;
+        //     }
+        //     Ok(())
+        // }).collect::<Vec<Result<()>>>();
         Ok(())
     }
 
@@ -175,19 +195,19 @@ impl Valid8Context {
 
     pub fn add_program_unchecked(&mut self, network: &Network, program_id: &Pubkey) -> Result<()> {
         // Get program account
-        let account = helpers::fetch_account(&network, &program_id)?;
+        let program_account = helpers::fetch_account(&network, &program_id)?;
 
         match program_id.to_string().as_ref() {
             "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" => {  },
             "11111111111111111111111111111111" => {  },
             _address => {
-                self.programs.push(account.clone());
+                self.programs.push(program_account.clone());
 
                 // Clone program data
-                helpers::clone_program(&self, &account)?;
+                helpers::clone_program_data(self, &program_account, network)?;
             
                 // Get IDL address
-                if let Ok(_) = helpers::clone_idl(&self, &account) {
+                if let Ok(_) = helpers::clone_idl(&self, &program_account) {
                     self.add_idl(&program_id)?
                 }
             }
@@ -198,7 +218,7 @@ impl Valid8Context {
     }
 
     pub fn add_account(&mut self, network: &Network, pubkey: &Pubkey) -> Result<()> {
-        // Check if we have the program in our hashmap already
+        // Check if we have the account in our accounts
         if self.has_account(&pubkey) {
             println!("{} already added", &pubkey.to_string());
             return Ok(())
@@ -218,6 +238,7 @@ impl Valid8Context {
             true => self.try_save_config(),
             false => self.add_program_unchecked(&network, &account.owner)
         }
+        
     }
 
     pub fn add_idl(&mut self, program_id: &Pubkey) -> Result<()> {
@@ -225,4 +246,90 @@ impl Valid8Context {
         Ok(())
     }
 
+
+    pub fn create_ledger(&self) -> Result<()> {
+
+        // // for start, mimic the testvalidator genesis config and ledger with the necessary keys
+        let mint_address = Keypair::new();
+        let validator_identity = Keypair::new();
+        let validator_vote_account = Keypair::new();
+        let validator_stake_account = Keypair::new();
+        let validator_identity_lamports = sol_to_lamports(500.);
+        let validator_stake_lamports = sol_to_lamports(1_000_000.);
+        let mint_lamports = sol_to_lamports(500_000_000.);
+
+
+        // let (mut genesis_config, keypair) = create_genesis_config(1_000_000 * LAMPORTS_PER_SOL);
+        
+        let mut accounts: HashMap<Pubkey, AccountSharedData> = HashMap::new();
+
+        for program in &self.programs {
+            accounts.insert(program.pubkey, AccountSharedData::from(program.to_account()?));
+            // genesis_config.add_account(program.pubkey, AccountSharedData::from(program.to_account()?));
+        }
+        
+        for account in &self.accounts {
+            accounts.insert(account.pubkey, AccountSharedData::from(account.to_account()?));
+            // genesis_config.add_account(account.pubkey, AccountSharedData::from(account.to_account()?));
+        }
+
+        let mut genesis_config = create_genesis_config_with_leader_ex(
+            mint_lamports,
+            &mint_address.pubkey(),
+            &validator_identity.pubkey(),
+            &validator_vote_account.pubkey(),
+            &validator_stake_account.pubkey(),
+            validator_stake_lamports,
+            validator_identity_lamports,
+            FeeRateGovernor::default(),
+            Rent::default(),
+            solana_sdk::genesis_config::ClusterType::Development,
+            accounts.into_iter().collect(),
+        );
+        genesis_config.epoch_schedule = EpochSchedule::without_warmup();
+
+        println!("{:#?}", genesis_config);
+
+        let _last_hash = create_new_ledger(
+            Path::new(&self.project_name.to_ledger_path()),
+            &genesis_config,
+            MAX_GENESIS_ARCHIVE_UNPACKED_SIZE,
+            LedgerColumnOptions::default(),
+        )
+        .map_err(|err| {
+            anyhow!(
+                "Failed to create ledger at {}: {}",
+                self.project_name.to_ledger_path(),
+                err
+            )
+        })?;
+        let project_ledger = &self.project_name.to_ledger_path();
+        let ledger_path = Path::new(project_ledger);
+
+        write_keypair_file(
+            &validator_identity,
+            ledger_path.join("validator-keypair.json").to_str().unwrap(),
+        ).unwrap();
+
+        write_keypair_file(
+            &validator_stake_account,
+            ledger_path
+                .join("stake-account-keypair.json")
+                .to_str()
+                .unwrap(),
+        ).unwrap();
+
+        write_keypair_file(
+            &validator_vote_account,
+            ledger_path
+                .join("vote-account-keypair.json")
+                .to_str()
+                .unwrap(),
+        ).unwrap();
+        println!("ledger created: {}", self.project_name.to_ledger_path());
+        
+
+
+        Ok(())
+    }
 }

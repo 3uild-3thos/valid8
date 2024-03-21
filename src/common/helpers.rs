@@ -9,7 +9,7 @@ use solana_sdk::{
     account::{Account}, 
 };
 use borsh::{self, to_vec};
-use crate::context::Valid8Context;
+use crate::{context::Valid8Context};
 
 use super::{AccountSchema, Network, ProjectName};
 
@@ -43,10 +43,12 @@ pub fn fetch_account_data(network: &Network, pubkey: &Pubkey) -> Result<Vec<u8>>
     Ok(client.get_account_data(&pubkey)?)
 }
 
-pub fn clone_program(ctx: &Valid8Context, account: &AccountSchema) -> Result<()> {
-    println!("clone_program");
+pub fn clone_program_data(ctx: &mut Valid8Context, account: &AccountSchema, network: &Network) -> Result<()> {
+    println!("clone_program_data");
     // Get program executable data address
     let program_executable_data_address = account.get_program_executable_data_address()?;
+    // let program_executable_data_account = fetch_account(&network, &program_executable_data_address)?;
+    ctx.add_account(network, &program_executable_data_address);
 
     // Fetch program executable data
     let program_executable_data = fetch_account_data(&account.get_network(), &program_executable_data_address)?;

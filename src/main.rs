@@ -15,7 +15,7 @@ const APP_NAME: &str = "Valid8";
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
-    // #[command(subcommand)]
+    // #[command(subcommand)]  // ./valid8 json1.json json2.json 
     command: Option<Commands>,
     // ProjectName
     project_name: Option<String>
@@ -26,6 +26,7 @@ enum Commands {
     Install,
     Edit,
     Run,
+    Ledger,
 }
 
 fn main() -> Result<()> {
@@ -43,6 +44,7 @@ fn router(cli: &Cli, ctx: &mut Valid8Context) -> Result<()> {
             Commands::Install => commands::install(ctx)?,
             Commands::Run => todo!(),
             Commands::Edit => commands::edit(ctx)?,
+            Commands::Ledger => commands::ledger(ctx)?,
         }
     } else {
         commands::edit(ctx)?

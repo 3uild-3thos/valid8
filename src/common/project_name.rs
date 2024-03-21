@@ -15,6 +15,9 @@ impl ProjectName {
     pub fn to_resources(&self) -> String {
         String::from(format!(".{}/", self.name))
     }
+    pub fn to_ledger_path(&self) -> String {
+        String::from(format!("{}{}_ledger", self.to_resources(), self.name))
+    }
 }
 
 impl Default for ProjectName {
