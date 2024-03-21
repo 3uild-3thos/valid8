@@ -3,9 +3,7 @@
     "name": "valid8"
   },
   "networks": [
-    "https://devnet.helius-rpc.com/?api-key=e4565d31-8f06-40e9-b783-2e42a4e229f1",
-    "mainnet",
-    "devnet"
+    "mainnet"
   ],
   "programs": [
     [
@@ -13,34 +11,15 @@
       "mainnet"
     ],
     [
-      "hadeK9DLv9eA7ya5KCTqSvSvRZeJC3JgD5a9Y3CNbvu",
+      "BPFLoaderUpgradeab1e11111111111111111111111",
       "mainnet"
-    ],
-    [
-      "HEvSKofvBgfaexv23kMabbYqxasxU3mQ4ibBMEmJWHny",
-      "devnet"
     ]
   ],
   "accounts": [
     [
-      "H4qEuH77udFPZQnJnsK1g9bydLXCJoVPcXGkTcNh3eKF",
+      "99hNSg9acmyg5hWTjw76GoA8k3LG5NvdPXih7sotdmZ7",
       "mainnet"
-    ],
-    [
-      "9qT3WeLV5o3t3GVgCk9A3mpTRjSb9qBvnfrAsVKLhmU5",
-      "devnet"
-    ],
-    [
-      "tKeYE4wtowRb8yRroZShTipE18YVnqwXjsSAoNsFU6g",
-      "https://devnet.helius-rpc.com/?api-key=e4565d31-8f06-40e9-b783-2e42a4e229f1"
-    ],
-    [
-      "HUZu4xMSHbxTWbkXR6jkGdjvDPJLjrpSNXSoUFBRgjWs",
-      "https://devnet.helius-rpc.com/?api-key=e4565d31-8f06-40e9-b783-2e42a4e229f1"
     ]
   ],
-  "idls": [
-    "hadeK9DLv9eA7ya5KCTqSvSvRZeJC3JgD5a9Y3CNbvu",
-    "HEvSKofvBgfaexv23kMabbYqxasxU3mQ4ibBMEmJWHny"
-  ]
+  "idls": []
 }

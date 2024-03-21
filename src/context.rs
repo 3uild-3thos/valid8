@@ -17,6 +17,8 @@ use solana_runtime::{
 };
 use solana_sdk::{account::{Account, AccountSharedData}, epoch_schedule::EpochSchedule, fee_calculator::FeeRateGovernor, genesis_config::create_genesis_config, native_token::{sol_to_lamports, LAMPORTS_PER_SOL}, rent::Rent, signature::{write_keypair_file, Keypair}, signer::Signer};
 
+use solana_test_validator::{TestValidator, TestValidatorGenesis};
+
 use crate::common::{
     helpers, project_name::ProjectName, AccountSchema, Network
 };
@@ -198,6 +200,7 @@ impl Valid8Context {
         let program_account = helpers::fetch_account(&network, &program_id)?;
 
         match program_id.to_string().as_ref() {
+            "BPFLoaderUpgradeab1e11111111111111111111111" => {  },
             "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" => {  },
             "11111111111111111111111111111111" => {  },
             _address => {
@@ -246,8 +249,35 @@ impl Valid8Context {
         Ok(())
     }
 
-
     pub fn create_ledger(&self) -> Result<()> {
+
+        let mut config = TestValidatorGenesis::default();
+        config.ledger_path(&self.project_name.to_ledger_path());
+        println!("self {:?}", &self);
+        println!("ledger path {}", &self.project_name.to_ledger_path());
+        for program in &self.programs {
+            let acc = AccountSharedData::from(program.to_account()?);
+            println!("prog {:#?}", acc);
+            config.add_account(program.pubkey, AccountSharedData::from(program.to_account()?));
+        }
+        for account in &self.accounts {
+            let acc = AccountSharedData::from(account.to_account()?);
+            
+            println!("acc {:#?}", acc);
+            
+            config.add_account(account.pubkey, AccountSharedData::from(account.to_account()?));
+        }
+
+        // config.
+        let (test_validator, _tv_keypair) = config.start();
+        std::thread::sleep(std::time::Duration::from_secs(3));
+        println!("Custom ledger created");
+
+
+        Ok(())
+    }
+
+    pub fn _create_ledger(&self) -> Result<()> {
 
         // // for start, mimic the testvalidator genesis config and ledger with the necessary keys
         let mint_address = Keypair::new();
