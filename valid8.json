@@ -3,23 +3,26 @@
     "name": "valid8"
   },
   "networks": [
-    "mainnet"
+    "mainnet",
+    "devnet"
   ],
   "programs": [
     [
-      "p1exdMJcjVao65QdewkaZRUnU6VPSXhus9n2GzWfh98",
-      "mainnet"
-    ],
-    [
-      "BPFLoaderUpgradeab1e11111111111111111111111",
-      "mainnet"
+      "HEvSKofvBgfaexv23kMabbYqxasxU3mQ4ibBMEmJWHny",
+      "devnet"
     ]
   ],
   "accounts": [
     [
-      "99hNSg9acmyg5hWTjw76GoA8k3LG5NvdPXih7sotdmZ7",
+      "H4qEuH77udFPZQnJnsK1g9bydLXCJoVPcXGkTcNh3eKF",
       "mainnet"
+    ],
+    [
+      "6TDapMxCnEzss5YCJZXZtTSHwe6ZJeWikwvPzLnZvq7m",
+      "devnet"
     ]
   ],
-  "idls": []
+  "idls": [
+    "HEvSKofvBgfaexv23kMabbYqxasxU3mQ4ibBMEmJWHny"
+  ]
 }

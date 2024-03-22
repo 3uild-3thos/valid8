@@ -254,7 +254,7 @@ impl Valid8Context {
         let mut config = TestValidatorGenesis::default();
         config.ledger_path(&self.project_name.to_ledger_path());
         println!("self {:?}", &self);
-        println!("ledger path {}", &self.project_name.to_ledger_path());
+        println!("ledger path {}", &self.project_name.to_string());
         for program in &self.programs {
             let acc = AccountSharedData::from(program.to_account()?);
             println!("prog {:#?}", acc);
@@ -270,7 +270,9 @@ impl Valid8Context {
 
         // config.
         let (test_validator, _tv_keypair) = config.start();
+        println!("{:?}", test_validator.cluster_info().all_peers());
         std::thread::sleep(std::time::Duration::from_secs(3));
+        drop(test_validator);
         println!("Custom ledger created");
 
 
