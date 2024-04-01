@@ -27,6 +27,7 @@ enum Commands {
     Edit,
     Run,
     Ledger,
+    Compose,
 }
 
 fn main() -> Result<()> {
@@ -45,6 +46,7 @@ fn router(cli: &Cli, ctx: &mut Valid8Context) -> Result<()> {
             Commands::Run => todo!(),
             Commands::Edit => commands::edit(ctx)?,
             Commands::Ledger => commands::ledger(ctx)?,
+            Commands::Compose => todo!(),
         }
     } else {
         commands::edit(ctx)?

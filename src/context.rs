@@ -1,4 +1,4 @@
-use std::{collections::{HashMap, HashSet}, fs::{create_dir_all, File}, io::{Read, Write}, path::Path, str::FromStr};
+use std::{collections::{HashMap, HashSet}, fs::{create_dir_all, File}, io::{Read, Write}, path::{Path, PathBuf}, str::FromStr};
 use anchor_lang::accounts::program;
 use anyhow::Result;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
@@ -176,6 +176,18 @@ impl Valid8Context {
 
         // Convert ConfigJson to Valid8Context, this also tries to read accounts from disc
         Ok(config.into())
+    }
+
+    pub fn try_compose(&self, other_json_path: impl Into<PathBuf>) -> Result<()> {
+        // read other json into a valid8 context struct, something like
+        // maybe you need another function to accept filename, it can be an impl here or in the helpers something
+        let other = Valid8Context::try_open_config(other_json_path)?;
+
+        // when you read the file, we have 2 valid8 contexts in memory, and the first one is the dominant,
+        // which means you should compare account and programs, see if there is any that's the same, 
+        // and use the one that was in the original context
+
+        Ok(())
     }
 
     pub fn has_account(&self, pubkey: &Pubkey) -> bool {
