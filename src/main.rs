@@ -1,5 +1,5 @@
 use anyhow::Result;
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::{ArgAction, Parser, Subcommand, ValueEnum};
 use common::ProjectName;
 use context::Valid8Context;
 
@@ -17,8 +17,9 @@ const APP_NAME: &str = "Valid8";
 struct Cli {
     // #[command(subcommand)]  // ./valid8 json1.json json2.json 
     command: Option<Commands>,
-    // ProjectName
-    project_name: Option<String>
+    // commmand argument
+    #[arg(long, short, action=ArgAction::SetTrue)]
+    yes: bool,
 }
 
 #[derive(Debug, Clone, ValueEnum)]
@@ -32,7 +33,7 @@ enum Commands {
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    let mut ctx = Valid8Context::init(cli.project_name.clone())?;
+    let mut ctx = Valid8Context::init(None)?;
 
     router(&cli, &mut ctx)
 
@@ -45,7 +46,7 @@ fn router(cli: &Cli, ctx: &mut Valid8Context) -> Result<()> {
             Commands::Install => commands::install(ctx)?,
             Commands::Run => todo!(),
             Commands::Edit => commands::edit(ctx)?,
-            Commands::Ledger => commands::ledger(ctx)?,
+            Commands::Ledger => commands::ledger(ctx, cli.yes.clone())?,
             Commands::Compose => todo!(),
         }
     } else {

@@ -354,7 +354,7 @@ impl Valid8Context {
         // );
         genesis_config.epoch_schedule = EpochSchedule::without_warmup();
 
-        println!("{:#?}", genesis_config);
+        // println!("{:#?}", genesis_config);
         let test_ledger_path = Path::new("test-ledger");
 
         let _last_hash = create_new_ledger(

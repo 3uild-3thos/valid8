@@ -1,32 +1,49 @@
-use anyhow::Result;
+use std::{fs, path::Path};
+
+use anyhow::{anyhow, Result};
 use dialoguer::Select;
 
 use crate::{program, account, context::Valid8Context};
 
-pub fn ledger(ctx: &mut Valid8Context) -> Result<()> {
+pub fn ledger(ctx: &mut Valid8Context, overwrite: bool) -> Result<()> {
+
+    println!("overwrite {}", overwrite);
+    let ledger_path = Path::new("test-ledger");
+
+    let mut user_choice = false;
+    if ledger_path.exists() {
+        if overwrite {
+            user_choice = true;
+        } else {
+            let items = vec![
+                "Yes",
+                "Exit", 
+            ];
+
+            let selection = Select::new()
+                .with_prompt("Ledger path already exists, do you want to overwrite?")
+                .items(&items)
+                .interact_opt()?;
+
+            if let Some(n) = selection {
+                match n {
+                    0 => user_choice = true,
+                    1 => return Err(anyhow!("No new ledger created")),
+                    _ => {}
+                }
+            }
+        }
+    }
+
+    if user_choice {
+        println!("Overwiting test-ledger directory");
+        fs::remove_dir_all(ledger_path)?;
+
+    }
+    
 
     ctx.create_ledger()?;
-    // let items = vec![
-    //     "Clone Program",
-    //     "Edit Program", 
-    //     "Clone Account", 
-    //     "Edit Account"
-    // ];
-
-    // let selection = Select::new()
-    //     .with_prompt("Select an option, or press Esc to exit.")
-    //     .items(&items)
-    //     .interact_opt()?;
-
-    // if let Some(n) = selection {
-    //     match n {
-    //         0 => program::clone(ctx)?,
-    //         1 => todo!(), //program::edit::command()?,
-    //         2 => account::clone(ctx)?,
-    //         3 => todo!(), // account::edit::command()?,
-    //         _ => {}
-    //     }
-    // }
+    
 
     Ok(())
 }
