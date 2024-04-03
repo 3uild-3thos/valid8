@@ -1,7 +1,7 @@
 use std::str::FromStr;
 use anyhow::Result;
 use dialoguer::Input;
-use solana_program::pubkey::Pubkey;
+use solana_sdk::pubkey::Pubkey;
 
 pub fn prompt_address() -> Result<Pubkey> {
     let mut program_id: Option<Pubkey> = None;

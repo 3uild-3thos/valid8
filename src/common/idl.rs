@@ -2,7 +2,9 @@ use std::{collections::HashMap, path::Path, fs::File, io::Read, fmt::format};
 use anyhow::Result;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 // use serde_json::Value;
-use solana_program::{pubkey::Pubkey, hash::hash};
+// use solana_program::{pubkey::Pubkey, hash::hash};
+use solana_sdk::pubkey::Pubkey;
+
 use anchor_lang::anchor_syn::idl::types::{Idl, IdlTypeDefinition};
 
 pub type Discriminator = [u8;8];

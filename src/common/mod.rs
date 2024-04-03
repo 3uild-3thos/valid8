@@ -18,3 +18,5 @@ pub use project_name::*;
 
 pub mod idl;
 pub use idl::*;
+
+// pub mod solcode;

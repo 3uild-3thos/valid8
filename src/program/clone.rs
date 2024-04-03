@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Result};
 use dialoguer::Input;
-use solana_program::pubkey::Pubkey;
+use solana_sdk::pubkey::Pubkey;
+
 use std::str::FromStr;
 use crate::{
     common::network, 

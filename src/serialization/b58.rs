@@ -1,6 +1,5 @@
 use serde::{Deserialize, Deserializer, Serializer};
-use solana_program::pubkey::Pubkey;
-
+use solana_sdk::pubkey::Pubkey;
 pub fn serialize<S: Serializer>(v: &Pubkey, s: S) -> Result<S::Ok, S::Error> {
     s.collect_str(&v.to_string())
 }

@@ -1,12 +1,11 @@
 use anyhow::{anyhow, Result};
 use dialoguer::{Input, Select};
-use solana_program::pubkey::Pubkey;
 use std::str::FromStr;
 use crate::{
     common::network, 
     context::Valid8Context
 };
-use solana_sdk::bpf_loader_upgradeable::{self, UpgradeableLoaderState};
+use solana_sdk::{bpf_loader_upgradeable::{self, UpgradeableLoaderState}, pubkey::Pubkey};
 
 pub fn edit(ctx: &mut Valid8Context) -> Result<()> {
     // to change upgrade authority, we need to do the following steps
@@ -36,9 +35,10 @@ pub fn edit(ctx: &mut Valid8Context) -> Result<()> {
             }
         });
         let mut fields: Vec<String> = vec!["owner".into(), "lamports".into(),];
-
+        
         
         if let Some(account) = account {
+            let program_executable_data_address = account.get_program_executable_data_address()?;
             // if let Ok(UpgradeableLoaderState::ProgramData {
             //     upgrade_authority_address,
             //     slot,

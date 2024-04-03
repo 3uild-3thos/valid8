@@ -48,7 +48,7 @@ pub fn clone_program_data(ctx: &mut Valid8Context, account: &AccountSchema, netw
     // Get program executable data address
     let program_executable_data_address = account.get_program_executable_data_address()?;
     // let program_executable_data_account = fetch_account(&network, &program_executable_data_address)?;
-    ctx.add_account(network, &program_executable_data_address);
+    ctx.add_account(network, &program_executable_data_address)?;
 
     // Fetch program executable data
     let program_executable_data = fetch_account_data(&account.get_network(), &program_executable_data_address)?;

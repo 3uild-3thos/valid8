@@ -3,19 +3,28 @@ use anchor_lang::accounts::program;
 use anyhow::Result;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde::{Serialize, Deserialize};
-use solana_program::pubkey::Pubkey;
+// use solana_program::pubkey::Pubkey;
 use anyhow::anyhow;
 
 use solana_ledger::{
-    blockstore::create_new_ledger, blockstore_options::LedgerColumnOptions,
-    create_new_tmp_ledger, genesis_utils,
+    blockstore::create_new_ledger, 
+    blockstore_options::LedgerColumnOptions,
 };
 
 use solana_runtime::{
-    bank_forks::BankForks, genesis_utils::create_genesis_config_with_leader_ex,
-    snapshot_config::SnapshotConfig,
+    genesis_utils::create_genesis_config_with_leader_ex,
 };
-use solana_sdk::{account::{Account, AccountSharedData}, epoch_schedule::EpochSchedule, fee_calculator::FeeRateGovernor, genesis_config::create_genesis_config, native_token::{sol_to_lamports, LAMPORTS_PER_SOL}, rent::Rent, signature::{write_keypair_file, Keypair}, signer::Signer};
+
+use solana_sdk::{
+    account::{Account, AccountSharedData},
+    epoch_schedule::EpochSchedule, 
+    fee_calculator::FeeRateGovernor, 
+    native_token::{sol_to_lamports, LAMPORTS_PER_SOL}, 
+    pubkey::Pubkey, 
+    rent::Rent, 
+    signature::{write_keypair_file, Keypair}, 
+    signer::Signer
+};
 
 // use solana_test_validator::{TestValidator, TestValidatorGenesis};
 
@@ -181,7 +190,7 @@ impl Valid8Context {
     pub fn try_compose(&self, other_json_path: impl Into<PathBuf>) -> Result<()> {
         // read other json into a valid8 context struct, something like
         // maybe you need another function to accept filename, it can be an impl here or in the helpers something
-        let other = Valid8Context::try_open_config(other_json_path)?;
+        // let other = Valid8Context::try_open_config(other_json_path)?;
 
         // when you read the file, we have 2 valid8 contexts in memory, and the first one is the dominant,
         // which means you should compare account and programs, see if there is any that's the same, 
@@ -330,12 +339,27 @@ impl Valid8Context {
             solana_sdk::genesis_config::ClusterType::Development,
             accounts.into_iter().collect(),
         );
+        // let mut genesis_config_info = create_genesis_config_with_leader(
+        //     mint_lamports,
+        //     // &mint_address.pubkey(),
+        //     &validator_identity.pubkey(),
+        //     // &validator_vote_account.pubkey(),
+        //     // &validator_stake_account.pubkey(),
+        //     validator_stake_lamports,
+        //     // validator_identity_lamports,
+        //     // FeeRateGovernor::default(),
+        //     // Rent::default(),
+        //     // solana_sdk::genesis_config::ClusterType::Development,
+        //     // accounts.into_iter().collect(),
+        // );
         genesis_config.epoch_schedule = EpochSchedule::without_warmup();
 
         println!("{:#?}", genesis_config);
+        let test_ledger_path = Path::new("test-ledger");
 
         let _last_hash = create_new_ledger(
-            Path::new(&self.project_name.to_ledger_path()),
+            // Path::new(&self.project_name.to_ledger_path()),
+            test_ledger_path,
             &genesis_config,
             MAX_GENESIS_ARCHIVE_UNPACKED_SIZE,
             LedgerColumnOptions::default(),
@@ -347,17 +371,16 @@ impl Valid8Context {
                 err
             )
         })?;
-        let project_ledger = &self.project_name.to_ledger_path();
-        let ledger_path = Path::new(project_ledger);
+        // let project_ledger = &self.project_name.to_ledger_path();
 
         write_keypair_file(
             &validator_identity,
-            ledger_path.join("validator-keypair.json").to_str().unwrap(),
+            test_ledger_path.join("validator-keypair.json").to_str().unwrap(),
         ).unwrap();
 
         write_keypair_file(
             &validator_stake_account,
-            ledger_path
+            test_ledger_path
                 .join("stake-account-keypair.json")
                 .to_str()
                 .unwrap(),
@@ -365,14 +388,13 @@ impl Valid8Context {
 
         write_keypair_file(
             &validator_vote_account,
-            ledger_path
+            test_ledger_path
                 .join("vote-account-keypair.json")
                 .to_str()
                 .unwrap(),
         ).unwrap();
-        println!("ledger created: {}", self.project_name.to_ledger_path());
-        
-
+        // println!("ledger created: {}", self.project_name.to_ledger_path());
+        println!("ledger directory created: test-ledger");
 
         Ok(())
     }
