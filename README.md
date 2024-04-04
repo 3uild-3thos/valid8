@@ -67,7 +67,7 @@ Generates a local ledger compatible with solana-test-validator. You can use this
 ## Generate a local ledger
 `valid8 ledger -y`
 
-## Start a testnet with solana-test-validator
+## Start solana-test-validator
 `solana-test-validator` 
 
 This will create a local ledger and run it with the cloned accounts available for testing.
