@@ -19,7 +19,6 @@ pub fn ledger(ctx: &mut Valid8Context, overwrite: bool) -> Result<()> {
                 "Yes",
                 "Exit", 
             ];
-
             let selection = Select::new()
                 .with_prompt("Ledger path already exists, do you want to overwrite?")
                 .items(&items)
