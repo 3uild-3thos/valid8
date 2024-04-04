@@ -181,7 +181,7 @@ impl Valid8Context {
         File::open(Path::new(&project_name.to_config()))
             .and_then(|mut file| file.read_to_end(&mut buf))?;
         let config: ConfigJson = serde_json::from_slice(&buf)?;
-        println!("try open config {:?}", &config);
+        println!("Trying to open config {:?}", &config);
 
         // Convert ConfigJson to Valid8Context, this also tries to read accounts from disc
         Ok(config.into())

@@ -44,7 +44,6 @@ pub fn fetch_account_data(network: &Network, pubkey: &Pubkey) -> Result<Vec<u8>>
 }
 
 pub fn clone_program_data(ctx: &mut Valid8Context, account: &AccountSchema, network: &Network) -> Result<()> {
-    println!("clone_program_data");
     // Get program executable data address
     let program_executable_data_address = account.get_program_executable_data_address()?;
     // let program_executable_data_account = fetch_account(&network, &program_executable_data_address)?;
@@ -58,7 +57,6 @@ pub fn clone_program_data(ctx: &mut Valid8Context, account: &AccountSchema, netw
 }
 
 pub fn clone_idl(ctx: &Valid8Context, account: &AccountSchema) -> Result<()> {
-    println!("clone_idl");
     // Get program address
     let program_id = account.get_pubkey();
     // Get IDL address
