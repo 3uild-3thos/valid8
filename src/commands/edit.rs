@@ -5,8 +5,8 @@ use crate::{program, account, context::Valid8Context};
 
 pub fn edit(ctx: &mut Valid8Context) -> Result<()> {
     let items = vec![
-        "Clone program"
-        "Clone account"
+        "Clone program",
+        "Clone account",
         "Edit Program", 
         "Edit Account"
     ];
@@ -20,8 +20,8 @@ pub fn edit(ctx: &mut Valid8Context) -> Result<()> {
         match n {
             0 => program::clone(ctx)?,
             1 => account::clone(ctx)?,
-            2 => program::edit(ctx),
-            3 => account::edit(ctx),
+            2 => program::edit(ctx)?,
+            3 => todo!(), //account::edit(ctx)?,
             _ => {}
         }
     }
