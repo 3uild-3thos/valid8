@@ -25,7 +25,7 @@ struct Cli {
 
 #[derive(Debug, Clone, ValueEnum)]
 enum Commands {
-    Install,
+    // Install,
     Edit,
     Run,
     Ledger,
@@ -45,7 +45,7 @@ fn router(cli: &Cli, ctx: &mut Valid8Context) -> Result<()> {
 
     if let Some(c) = &cli.command {
         match c {
-            Commands::Install => commands::install(ctx)?,
+            // Commands::Install => commands::install(ctx)?,
             Commands::Run => todo!(),
             Commands::Edit => commands::edit(ctx)?,
             Commands::Ledger => commands::ledger(ctx, cli.yes.clone())?,

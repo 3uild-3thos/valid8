@@ -126,22 +126,22 @@ impl Valid8Context {
         Ok(file)
     }
 
-    pub fn install(&mut self) -> Result<()> {
+    // pub fn install(&mut self) -> Result<()> {
 
-        // Check if project already installed on local workspace
+    //     // Check if project already installed on local workspace
 
 
 
-        let _ = self.programs.clone().into_par_iter().map(|p| {
-            let program_data_address = helpers::clone_program_data(&self, &p)?;
-            // self.add_account( &p.network, &p.pubkey);
-            if self.idls.contains(&p.pubkey.to_string()) {
-                helpers::clone_idl(&self, &p)?;
-            }
-            Ok(())
-        }).collect::<Result<Vec<()>>>();
-        Ok(())
-    }
+    //     let _ = self.programs.clone().into_par_iter().map(|p| {
+    //         let program_data_address = helpers::clone_program_data(&self, &p)?;
+    //         // self.add_account( &p.network, &p.pubkey);
+    //         if self.idls.contains(&p.pubkey.to_string()) {
+    //             helpers::clone_idl(&self, &p)?;
+    //         }
+    //         Ok(())
+    //     }).collect::<Result<Vec<()>>>();
+    //     Ok(())
+    // }
 
     pub fn try_init_config(project_name: &ProjectName) -> Result<Self> {
         let mut ctx = Valid8Context::default();
