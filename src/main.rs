@@ -9,6 +9,7 @@ mod context;
 mod program;
 mod common;
 mod serialization;
+mod config;
 
 const APP_NAME: &str = "Valid8";
 
@@ -30,6 +31,7 @@ enum Commands {
     Ledger,
     Compose,
 }
+
 
 fn main() -> Result<()> {
     let cli = Cli::parse();

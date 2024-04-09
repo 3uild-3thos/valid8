@@ -1,6 +1,7 @@
 use std::{collections::{HashMap, HashSet}, fs::{create_dir_all, File}, io::{Read, Write}, path::{Path, PathBuf}, str::FromStr};
 use anchor_lang::accounts::program;
 use anyhow::Result;
+use dialoguer::Select;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde::{Serialize, Deserialize};
 // use solana_program::pubkey::Pubkey;
@@ -11,9 +12,7 @@ use solana_ledger::{
     blockstore_options::LedgerColumnOptions,
 };
 
-use solana_runtime::{
-    genesis_utils::create_genesis_config_with_leader_ex,
-};
+use solana_runtime::genesis_utils::create_genesis_config_with_leader_ex;
 
 use solana_sdk::{
     account::{Account, AccountSharedData},
@@ -28,8 +27,10 @@ use solana_sdk::{
 
 // use solana_test_validator::{TestValidator, TestValidatorGenesis};
 
-use crate::common::{
-    helpers, project_name::ProjectName, AccountSchema, Network
+use crate::{common::{
+        helpers, project_name::ProjectName, AccountSchema, Network
+    }, 
+    config::ConfigJson
 };
 const MAX_GENESIS_ARCHIVE_UNPACKED_SIZE: u64 = 10 * 1024 * 1024; // 10 MiB from testvalidator source
 /*
@@ -52,38 +53,6 @@ pub struct Valid8Context {
     pub programs: Vec<AccountSchema>,
     pub accounts: Vec<AccountSchema>,
     pub idls: Vec<String>,
-}
-
-#[derive(Serialize, Deserialize, Default, Debug)]
-pub struct ConfigJson {
-    pub project_name: ProjectName,
-    pub networks: HashSet<Network>,
-    pub programs: Vec<(String, Network)>,
-    pub accounts: Vec<(String, Network)>,
-    pub idls: Vec<String>,
-}
-
-impl From<Valid8Context> for ConfigJson {
-    fn from(value: Valid8Context) -> Self {
-
-        let programs: Vec<(String, Network)> = value.programs.iter().map(|a_s| {
-            let _ = helpers::save_account_to_disc(&value.project_name, &a_s);
-            (a_s.pubkey.to_string(), a_s.network.clone())
-        }).collect();
-
-        let accounts: Vec<(String, Network)> = value.accounts.iter().map(|a_s| {
-            let _ = helpers::save_account_to_disc(&value.project_name, &a_s);
-            (a_s.pubkey.to_string(), a_s.network.clone())
-        }).collect();
-
-        Self {
-            project_name: value.project_name,
-            networks: value.networks,
-            programs,
-            accounts,
-            idls: value.idls,
-        }
-    }
 }
 
 impl From<ConfigJson> for Valid8Context {
@@ -118,9 +87,30 @@ impl Valid8Context {
             project_name = ProjectName::from_str(&name)?;
         }
         
-        if let Ok(config) = Self::try_open_config(&project_name) {
-            println!("{} config found", project_name.to_config());
-            Ok(config)
+        if let Ok((config, installed)) = Self::try_open_config(&project_name) {
+            if !installed {
+                let items = vec!["Install"];
+
+                let selection = Select::new()
+                    .with_prompt("Accounts not yet installed, select install, or press ESC to exit?")
+                    .items(&items)
+                    .interact_opt()?;
+
+                if let Some(n) = selection {
+                    match n {
+                        0 => {Ok(
+                            config.to_context()?
+                        )},
+                        _ => Err(anyhow!("Invalid option. Exit.")),
+                    }
+                } else {
+                    Err(anyhow!("Accounts not installed. Exit"))
+                }
+
+            } else {
+                println!("{} config found, accounts installed: {}", project_name.to_config(), installed);
+                Ok(config.into())
+            }
         } else {
             Self::try_init_config(&project_name)
         }
@@ -142,14 +132,14 @@ impl Valid8Context {
 
 
 
-        // let _ = self.programs.iter().collect::<Vec<&AccountSchema>>().into_par_iter().map(|p| {
-        //     helpers::clone_program_data(self, &p, &p.network)?;
-        //     self.add_account( &p.network, &p.pubkey);
-        //     if self.idls.contains(&p.pubkey.to_string()) {
-        //         helpers::clone_idl(&self, &p)?;
-        //     }
-        //     Ok(())
-        // }).collect::<Vec<Result<()>>>();
+        let _ = self.programs.clone().into_par_iter().map(|p| {
+            let program_data_address = helpers::clone_program_data(&self, &p)?;
+            // self.add_account( &p.network, &p.pubkey);
+            if self.idls.contains(&p.pubkey.to_string()) {
+                helpers::clone_idl(&self, &p)?;
+            }
+            Ok(())
+        }).collect::<Result<Vec<()>>>();
         Ok(())
     }
 
@@ -176,15 +166,21 @@ impl Valid8Context {
         Ok(())
     }
 
-    pub fn try_open_config(project_name: &ProjectName) -> Result<Self> {
+    pub fn try_open_config(project_name: &ProjectName) -> Result<(ConfigJson, bool)> {
         let mut buf = vec![];
         File::open(Path::new(&project_name.to_config()))
             .and_then(|mut file| file.read_to_end(&mut buf))?;
         let config: ConfigJson = serde_json::from_slice(&buf)?;
-        println!("Trying to open config {:?}", &config);
-
+        println!("Opened config {:?}", &config);
+    
         // Convert ConfigJson to Valid8Context, this also tries to read accounts from disc
-        Ok(config.into())
+        let mut installed = true;
+        if !&config.is_installed() {
+            println!("Accounts not found in local workspace, please run valid8 install to clone them.");
+            installed = false;
+        }
+
+        Ok((config, installed))
     }
 
     pub fn try_compose(&self, other_json_path: impl Into<PathBuf>) -> Result<()> {
@@ -228,7 +224,8 @@ impl Valid8Context {
                 self.programs.push(program_account.clone());
 
                 // Clone program data
-                helpers::clone_program_data(self, &program_account, network)?;
+                let program_data_account = helpers::clone_program_data(self, &program_account)?;
+                self.accounts.push(program_data_account);
             
                 // Get IDL address
                 if let Ok(_) = helpers::clone_idl(&self, &program_account) {
@@ -339,6 +336,7 @@ impl Valid8Context {
             solana_sdk::genesis_config::ClusterType::Development,
             accounts.into_iter().collect(),
         );
+
         // let mut genesis_config_info = create_genesis_config_with_leader(
         //     mint_lamports,
         //     // &mint_address.pubkey(),
