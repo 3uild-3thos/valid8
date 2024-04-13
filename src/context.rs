@@ -15,14 +15,7 @@ use solana_ledger::{
 use solana_runtime::genesis_utils::create_genesis_config_with_leader_ex;
 
 use solana_sdk::{
-    account::{Account, AccountSharedData},
-    epoch_schedule::EpochSchedule, 
-    fee_calculator::FeeRateGovernor, 
-    native_token::{sol_to_lamports, LAMPORTS_PER_SOL}, 
-    pubkey::Pubkey, 
-    rent::Rent, 
-    signature::{write_keypair_file, Keypair}, 
-    signer::Signer
+    account::{Account, AccountSharedData}, account_utils::StateMut, bpf_loader_upgradeable::UpgradeableLoaderState, epoch_schedule::EpochSchedule, fee_calculator::FeeRateGovernor, native_token::{sol_to_lamports, LAMPORTS_PER_SOL}, pubkey::Pubkey, rent::Rent, signature::{write_keypair_file, Keypair}, signer::Signer
 };
 
 // use solana_test_validator::{TestValidator, TestValidatorGenesis};
@@ -280,15 +273,37 @@ impl Valid8Context {
             },
             EditField::UpgradeAuthority(_new_pubkey) => return Err(anyhow!("No upgrade authoprity on account")),
         }
-        
+
         helpers::save_account_to_disc(&self.project_name, &account)?;
         self.accounts.push(account);
         
         Ok(())
     }
 
-    pub fn edit_program(&mut self, pubkey: &Pubkey) -> Result<()> {
+    pub fn edit_program(&mut self, pubkey: &Pubkey, edit_field: EditField) -> Result<()> {
 
+        let mut program_data_account = self.get_account(pubkey)?;
+
+        match edit_field {
+            EditField::Lamports(new_lamports) => {
+                program_data_account.lamports = new_lamports
+            }
+            EditField::Owner(new_owner) => {
+                program_data_account.owner = new_owner
+            },
+            EditField::UpgradeAuthority(new_upgrade_auth) => {
+                let new_statue = UpgradeableLoaderState::ProgramData {
+                    slot: 0,
+                    upgrade_authority_address: Some(new_upgrade_auth),
+                };
+                let mut acc = program_data_account.to_account()?;
+                acc.set_state(&new_statue)?;
+                program_data_account = AccountSchema::from_account(&acc, &program_data_account.pubkey, &program_data_account.network)?;
+            },
+
+        }
+        helpers::save_account_to_disc(&self.project_name, &program_data_account)?;
+        self.accounts.push(program_data_account);
 
         Ok(())
     }

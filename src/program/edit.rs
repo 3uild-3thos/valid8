@@ -39,7 +39,8 @@ pub fn edit(ctx: &mut Valid8Context) -> Result<()> {
         
         let pubkey = program_id.ok_or(anyhow!("Public key not defined"))?;
 
-        let program = ctx.programs
+        let program = ctx
+            .programs
             .iter()
             .find(|acc| acc.pubkey == pubkey)
             .ok_or(anyhow!("No account found in context"))?;
@@ -51,7 +52,7 @@ pub fn edit(ctx: &mut Valid8Context) -> Result<()> {
             .accounts
             .iter()
             .find(|account| account.pubkey == program_executable_data_address)
-            .ok_or(anyhow!("Can't find program data account in context"))?;
+            .ok_or(anyhow!("No program data account in context"))?;
 
         let upgrade_authority = if let Ok(UpgradeableLoaderState::ProgramData {
             upgrade_authority_address,
@@ -84,47 +85,48 @@ pub fn edit(ctx: &mut Valid8Context) -> Result<()> {
         match selection {
             0 => {
                 let new_owner: String = Input::new().with_prompt("New owner pubkey").interact_text()?;
-                ctx.edit_account(&pubkey, EditField::Owner(Pubkey::from_str(&new_owner)?))?;
+                ctx.edit_account(&program_executable_data_address, EditField::Owner(Pubkey::from_str(&new_owner)?))?;
             },
             1 => {
                 let new_lamports: String = Input::new().with_prompt("New lamports").interact_text()?;
-                ctx.edit_account(&pubkey, EditField::Lamports(new_lamports.parse()?))?;
+                ctx.edit_account(&program_executable_data_address, EditField::Lamports(new_lamports.parse()?))?;
             },
             2 => {
-                let new_upgrade_auth: String = Input::new()
-                    .with_prompt("New upgrade authority pubkey")
-                    .interact_text()?;
+                let new_upgrade_auth: String = Input::new().with_prompt("New upgrade authority pubkey").interact_text()?;
+                ctx.edit_program(&program_executable_data_address, EditField::UpgradeAuthority(Pubkey::from_str(&new_upgrade_auth)?))?;
+                // let mut program_data =
+                //     bincode::serialize(&UpgradeableLoaderState::ProgramData {
+                //         slot: 0,
+                //         upgrade_authority_address: Some(Pubkey::from_str(&new_upgrade_auth)?),
+                //     })?;
 
-                let mut program_data =
-                    bincode::serialize(&UpgradeableLoaderState::ProgramData {
-                        slot: 0,
-                        upgrade_authority_address: Some(Pubkey::from_str(&new_upgrade_auth)?),
-                    })?;
+                
+                
 
-                let mut so_bytes = vec![];
+                // let mut so_bytes = vec![];
 
-                File::open(Path::new(&format!(
-                    "{}{}.so",
-                    ctx.project_name.to_resources(),
-                    program.pubkey
-                )))
-                .and_then(|mut file| file.read_to_end(&mut so_bytes))?;
+                // File::open(Path::new(&format!(
+                //     "{}{}.so",
+                //     ctx.project_name.to_resources(),
+                //     program.pubkey
+                // )))
+                // .and_then(|mut file| file.read_to_end(&mut so_bytes))?;
 
-                program_data.extend_from_slice(&so_bytes);
+                // program_data.extend_from_slice(&so_bytes);
 
-                let edited_acc = ctx.programs.iter_mut().find_map(|account_schema| {
-                    if account_schema.pubkey == program_executable_data_address {
-                        account_schema.data = program_data.clone();
-                        Some(account_schema)
-                    } else {
-                        None
-                    }
-                });
-                if let Some(acc) = edited_acc {
-                    helpers::save_account_to_disc(&ctx.project_name, acc)?;
-                } else {
-                    return Err(anyhow!("Couldn't edit and save program account"))
-                }
+                // let edited_acc = ctx.programs.iter_mut().find_map(|account_schema| {
+                //     if account_schema.pubkey == program_executable_data_address {
+                //         account_schema.data = program_data.clone();
+                //         Some(account_schema)
+                //     } else {
+                //         None
+                //     }
+                // });
+                // if let Some(acc) = edited_acc {
+                //     helpers::save_account_to_disc(&ctx.project_name, acc)?;
+                // } else {
+                //     return Err(anyhow!("Couldn't edit and save program account"))
+                // }
 
                 println!("Program edited");
 
