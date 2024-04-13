@@ -21,7 +21,7 @@ pub fn edit(ctx: &mut Valid8Context) -> Result<()> {
             0 => program::clone(ctx)?,
             1 => account::clone(ctx)?,
             2 => program::edit(ctx)?,
-            3 => todo!(), //account::edit(ctx)?,
+            3 => account::edit(ctx)?,
             _ => {}
         }
     }

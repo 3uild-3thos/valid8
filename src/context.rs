@@ -55,6 +55,12 @@ pub struct Valid8Context {
     pub idls: Vec<String>,
 }
 
+pub enum EditField{
+    Owner(Pubkey),
+    UpgradeAuthority(Pubkey),
+    Lamports(u64),
+}
+
 impl From<ConfigJson> for Valid8Context {
     fn from(value: ConfigJson) -> Self {
 
@@ -125,23 +131,6 @@ impl Valid8Context {
         let file = File::create(Path::new(&project_name.to_config()))?;
         Ok(file)
     }
-
-    // pub fn install(&mut self) -> Result<()> {
-
-    //     // Check if project already installed on local workspace
-
-
-
-    //     let _ = self.programs.clone().into_par_iter().map(|p| {
-    //         let program_data_address = helpers::clone_program_data(&self, &p)?;
-    //         // self.add_account( &p.network, &p.pubkey);
-    //         if self.idls.contains(&p.pubkey.to_string()) {
-    //             helpers::clone_idl(&self, &p)?;
-    //         }
-    //         Ok(())
-    //     }).collect::<Result<Vec<()>>>();
-    //     Ok(())
-    // }
 
     pub fn try_init_config(project_name: &ProjectName) -> Result<Self> {
         let mut ctx = Valid8Context::default();
@@ -263,7 +252,44 @@ impl Valid8Context {
     }
 
     pub fn add_idl(&mut self, program_id: &Pubkey) -> Result<()> {
+
+
         self.idls.push(program_id.to_string());
+        Ok(())
+    }
+
+    pub fn get_account(&mut self, pubkey: &Pubkey,) -> Result<AccountSchema> {
+        let position = self.accounts
+            .iter()
+            .position(|acc| acc.pubkey == *pubkey)
+            .ok_or(anyhow!("No account found in context; Edit"))?;
+        
+        Ok(self.accounts.remove(position))
+    }
+
+    pub fn edit_account(&mut self, pubkey: &Pubkey, edit_field: EditField) -> Result<()> {
+       
+        let mut account = self.get_account(pubkey)?;
+
+        match edit_field {
+            EditField::Lamports(new_lamports) => {
+                account.lamports = new_lamports
+            }
+            EditField::Owner(new_owner) => {
+                account.owner = new_owner
+            },
+            EditField::UpgradeAuthority(_new_pubkey) => return Err(anyhow!("No upgrade authoprity on account")),
+        }
+        
+        helpers::save_account_to_disc(&self.project_name, &account)?;
+        self.accounts.push(account);
+        
+        Ok(())
+    }
+
+    pub fn edit_program(&mut self, pubkey: &Pubkey) -> Result<()> {
+
+
         Ok(())
     }
 

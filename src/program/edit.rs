@@ -1,6 +1,6 @@
 use crate::{
     common::{helpers, network},
-    context::Valid8Context,
+    context::{EditField, Valid8Context},
 };
 use anchor_lang::accounts::program;
 use anyhow::{anyhow, Result};
@@ -36,87 +36,102 @@ pub fn edit(ctx: &mut Valid8Context) -> Result<()> {
                 continue;
             }
         }
-        let account = ctx.programs.iter().find_map(|account_schema| {
-            if program_id.unwrap() == account_schema.pubkey {
-                Some(account_schema)
-            } else {
-                None
-            }
-        });
+        
+        let pubkey = program_id.ok_or(anyhow!("Public key not defined"))?;
 
-        if let Some(program) = account {
-            let program_executable_data_address = program.get_program_executable_data_address()?;
-            let program_data_account = ctx
-                .accounts
-                .iter()
-                .find(|account| account.pubkey == program_executable_data_address)
-                .ok_or_else(|| anyhow!("Can't find program data account in context"))?;
+        let program = ctx.programs
+            .iter()
+            .find(|acc| acc.pubkey == pubkey)
+            .ok_or(anyhow!("No account found in context"))?;
 
-            let upgrade_authority = if let Ok(UpgradeableLoaderState::ProgramData {
-                upgrade_authority_address,
-                slot,
-            }) = program_data_account.to_account()?.state()
+        let program_executable_data_address = program.get_program_executable_data_address()?;
+        println!("program executable data address {}", program_executable_data_address);
+
+        let program_data_account = ctx
+            .accounts
+            .iter()
+            .find(|account| account.pubkey == program_executable_data_address)
+            .ok_or(anyhow!("Can't find program data account in context"))?;
+
+        let upgrade_authority = if let Ok(UpgradeableLoaderState::ProgramData {
+            upgrade_authority_address,
+            slot: _,
+        }) = program_data_account.to_account()?.state()
+        {
+            upgrade_authority_address
+        } else {
+            None
+        };
+
+        let fields: Vec<String> = vec![
+            format!("owner: {}", program_data_account.owner.to_string()),
+            format!("lamports: {}", program_data_account.lamports.to_string()),
             {
-                upgrade_authority_address
-            } else {
-                None
-            };
+                if let Some(pubkey) = upgrade_authority {
+                    format!("upgrade authority: {}", pubkey)
+                } else {
+                    format!("upgrade authority: ")
+                }
+            },
+        ];
 
-            let fields: Vec<String> = vec![
-                format!("owner: {}", program_data_account.owner.to_string()),
-                format!("lamports: {}", program_data_account.lamports.to_string()),
-                {
-                    if let Some(pubkey) = upgrade_authority {
-                        format!("upgrade authority: {}", pubkey)
+        let selection = Select::new()
+            .with_prompt("Select a field to edit")
+            .items(&fields)
+            .interact()?;
+
+
+        match selection {
+            0 => {
+                let new_owner: String = Input::new().with_prompt("New owner pubkey").interact_text()?;
+                ctx.edit_account(&pubkey, EditField::Owner(Pubkey::from_str(&new_owner)?))?;
+            },
+            1 => {
+                let new_lamports: String = Input::new().with_prompt("New lamports").interact_text()?;
+                ctx.edit_account(&pubkey, EditField::Lamports(new_lamports.parse()?))?;
+            },
+            2 => {
+                let new_upgrade_auth: String = Input::new()
+                    .with_prompt("New upgrade authority pubkey")
+                    .interact_text()?;
+
+                let mut program_data =
+                    bincode::serialize(&UpgradeableLoaderState::ProgramData {
+                        slot: 0,
+                        upgrade_authority_address: Some(Pubkey::from_str(&new_upgrade_auth)?),
+                    })?;
+
+                let mut so_bytes = vec![];
+
+                File::open(Path::new(&format!(
+                    "{}{}.so",
+                    ctx.project_name.to_resources(),
+                    program.pubkey
+                )))
+                .and_then(|mut file| file.read_to_end(&mut so_bytes))?;
+
+                program_data.extend_from_slice(&so_bytes);
+
+                let edited_acc = ctx.programs.iter_mut().find_map(|account_schema| {
+                    if account_schema.pubkey == program_executable_data_address {
+                        account_schema.data = program_data.clone();
+                        Some(account_schema)
                     } else {
-                        format!("upgrade authority: ")
+                        None
                     }
-                },
-            ];
-
-            let selection = Select::new()
-                .with_prompt("Select a field to edit")
-                .items(&fields)
-                .interact()?;
-
-            let mut selected_string = String::new();
-
-            match selection {
-                0 => {
-                    let new_owner: String = Input::new()
-                        .with_prompt("New owner pubkey")
-                        .interact_text()?;
+                });
+                if let Some(acc) = edited_acc {
+                    helpers::save_account_to_disc(&ctx.project_name, acc)?;
+                } else {
+                    return Err(anyhow!("Couldn't edit and save program account"))
                 }
-                1 => todo!(),
-                2 => {
-                    let new_upgrade_auth: String = Input::new()
-                        .with_prompt("New upgrade authority pubkey")
-                        .interact_text()?;
 
-                    let mut program_data =
-                        bincode::serialize(&UpgradeableLoaderState::ProgramData {
-                            slot: 0,
-                            upgrade_authority_address: Some(Pubkey::from_str(&new_upgrade_auth)?),
-                        })?;
+                println!("Program edited");
 
-                    let mut so_bytes = vec![];
-                    File::open(Path::new(&format!(
-                        "{}{}.so",
-                        ctx.project_name.to_resources(),
-                        program.pubkey
-                    )))
-                    .and_then(|mut file| file.read_to_end(&mut so_bytes))?;
-
-                    // helpers::
-                }
-                _ => todo!(), // 3 => Err(Error::msg("Exit")),
-                              // _ => if items.len() > selection {
-                              //     Ok(Network::Custom(items[selection].clone()))
-                              // } else {
-                              //     Err(Error::msg("Invalid network selection"))
-                              // }
             }
+            _ => todo!(), 
         }
     }
+
     Ok(())
 }
