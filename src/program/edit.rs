@@ -1,25 +1,15 @@
-use crate::{
-    common::{helpers, network},
-    context::{EditField, Valid8Context},
-};
-use anchor_lang::accounts::program;
 use anyhow::{anyhow, Result};
 use dialoguer::{Input, Select};
 use solana_sdk::{
     account_utils::StateMut,
-    bpf_loader_upgradeable::{self, UpgradeableLoaderState},
+    bpf_loader_upgradeable:: UpgradeableLoaderState,
     pubkey::Pubkey,
 };
-use std::{fs::File, io::Read, path::Path, str::FromStr};
+use std::str::FromStr;
+
+use crate::context::{EditField, Valid8Context};
 
 pub fn edit(ctx: &mut Valid8Context) -> Result<()> {
-    // to change upgrade authority, we need to do the following steps
-
-    // look for program to edit in programs of ctx
-    // if found, look for program data account in ctx
-    // if found, deserialize data to a mutable variable with UpgradeableLoaderState::ProgramData that returns upgrade auth and last deploy slot
-    // serialize data and save account to ctx/disc
-
     let mut program_id = None;
     while program_id.is_none() {
         let program_id_string: String = Input::new()
@@ -94,44 +84,8 @@ pub fn edit(ctx: &mut Valid8Context) -> Result<()> {
             2 => {
                 let new_upgrade_auth: String = Input::new().with_prompt("New upgrade authority pubkey").interact_text()?;
                 ctx.edit_program(&program_executable_data_address, EditField::UpgradeAuthority(Pubkey::from_str(&new_upgrade_auth)?))?;
-                // let mut program_data =
-                //     bincode::serialize(&UpgradeableLoaderState::ProgramData {
-                //         slot: 0,
-                //         upgrade_authority_address: Some(Pubkey::from_str(&new_upgrade_auth)?),
-                //     })?;
-
-                
-                
-
-                // let mut so_bytes = vec![];
-
-                // File::open(Path::new(&format!(
-                //     "{}{}.so",
-                //     ctx.project_name.to_resources(),
-                //     program.pubkey
-                // )))
-                // .and_then(|mut file| file.read_to_end(&mut so_bytes))?;
-
-                // program_data.extend_from_slice(&so_bytes);
-
-                // let edited_acc = ctx.programs.iter_mut().find_map(|account_schema| {
-                //     if account_schema.pubkey == program_executable_data_address {
-                //         account_schema.data = program_data.clone();
-                //         Some(account_schema)
-                //     } else {
-                //         None
-                //     }
-                // });
-                // if let Some(acc) = edited_acc {
-                //     helpers::save_account_to_disc(&ctx.project_name, acc)?;
-                // } else {
-                //     return Err(anyhow!("Couldn't edit and save program account"))
-                // }
-
-                println!("Program edited");
-
             }
-            _ => todo!(), 
+            _ => return Err(anyhow!("Wrong edit program option")), 
         }
     }
 

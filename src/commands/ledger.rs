@@ -3,11 +3,10 @@ use std::{fs, path::Path};
 use anyhow::{anyhow, Result};
 use dialoguer::Select;
 
-use crate::{program, account, context::Valid8Context};
+use crate::context::Valid8Context;
 
 pub fn ledger(ctx: &mut Valid8Context, overwrite: bool) -> Result<()> {
 
-    // println!("overwrite {}", overwrite);
     let ledger_path = Path::new("test-ledger");
 
     let mut user_choice = false;

@@ -11,7 +11,7 @@ mod common;
 mod serialization;
 mod config;
 
-const APP_NAME: &str = "Valid8";
+// const APP_NAME: &str = "Valid8";
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]

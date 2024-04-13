@@ -1,15 +1,9 @@
 use std::{fs::File, io::{Read, Write}, path::Path, str::FromStr};
-use anyhow::{anyhow, Error, Result};
+use anyhow::{Error, Result};
 use flate2::read::ZlibDecoder;
-use serde::Serialize;
-// use serde_json::Value;
 use anchor_lang::{idl::IdlAccount, AnchorDeserialize};
-use solana_sdk::{
-    pubkey::Pubkey,
-    account::{Account}, 
-};
-use borsh::{self, to_vec};
-use crate::{context::Valid8Context};
+use solana_sdk::pubkey::Pubkey;
+use crate::context::Valid8Context;
 
 use super::{AccountSchema, Network, ProjectName};
 
@@ -17,7 +11,7 @@ pub fn find_idl_address(pubkey: &Pubkey) -> Result<Pubkey> {
     Ok(IdlAccount::address(pubkey))
 }
 
-pub fn fetch_idl_schema(ctx: &Valid8Context, network: &Network, pubkey: &Pubkey) -> Result<Vec<u8>> {
+pub fn fetch_idl_schema(_ctx: &Valid8Context, network: &Network, pubkey: &Pubkey) -> Result<Vec<u8>> {
     let data = fetch_account_data(network, pubkey)?;
     // Cut off account discriminator.
     let mut d: &[u8] = &data[8..];
@@ -35,7 +29,6 @@ pub fn fetch_account(network: &Network, pubkey: &Pubkey) -> Result<AccountSchema
     let client = network.client();
     let account_scema = AccountSchema::from_account( &client.get_account(&pubkey)?, pubkey, network)?;
     Ok(account_scema)
-
 }
 
 pub fn fetch_account_data(network: &Network, pubkey: &Pubkey) -> Result<Vec<u8>> {

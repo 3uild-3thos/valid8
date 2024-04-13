@@ -1,4 +1,4 @@
-use std::{collections::HashSet, fmt::Display, ops::Deref, str::FromStr};
+use std::{fmt::Display, str::FromStr};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use anyhow::{Result, Error};
 use dialoguer::{Input, Select};
@@ -69,8 +69,6 @@ impl<'de> Deserialize<'de> for Network {
 
 pub fn get(ctx: &Valid8Context) -> Result<Network> {
     let mut items: Vec<String> = vec!["mainnet".into(), "devnet".into(), "custom".into(), "exit".into()];
-    // TODO: Push any custom networks defined in our JSON file
-    // berg: like this? 
     for network in ctx.networks.iter() {
         if !items.contains(&network.to_string()) {
             items.push(network.to_string())

@@ -1,10 +1,7 @@
 use std::{collections::{HashMap, HashSet}, fs::{create_dir_all, File}, io::{Read, Write}, path::{Path, PathBuf}, str::FromStr};
-use anchor_lang::accounts::program;
 use anyhow::Result;
 use dialoguer::Select;
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde::{Serialize, Deserialize};
-// use solana_program::pubkey::Pubkey;
 use anyhow::anyhow;
 
 use solana_ledger::{
@@ -15,10 +12,17 @@ use solana_ledger::{
 use solana_runtime::genesis_utils::create_genesis_config_with_leader_ex;
 
 use solana_sdk::{
-    account::{Account, AccountSharedData}, account_utils::StateMut, bpf_loader_upgradeable::UpgradeableLoaderState, epoch_schedule::EpochSchedule, fee_calculator::FeeRateGovernor, native_token::{sol_to_lamports, LAMPORTS_PER_SOL}, pubkey::Pubkey, rent::Rent, signature::{write_keypair_file, Keypair}, signer::Signer
+    account::AccountSharedData,
+    account_utils::StateMut,
+    bpf_loader_upgradeable::UpgradeableLoaderState,
+    epoch_schedule::EpochSchedule,
+    fee_calculator::FeeRateGovernor,
+    native_token::sol_to_lamports,
+    pubkey::Pubkey,
+    rent::Rent,
+    signature::{write_keypair_file, Keypair},
+    signer::Signer
 };
-
-// use solana_test_validator::{TestValidator, TestValidatorGenesis};
 
 use crate::{common::{
         helpers, project_name::ProjectName, AccountSchema, Network

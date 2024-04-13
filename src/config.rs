@@ -18,6 +18,8 @@ pub struct ConfigJson {
     pub idls: Vec<String>,
 }
 
+
+#[allow(unused_variables)]
 impl ConfigJson {
     pub fn to_context(&self) -> Result<Valid8Context> {
         let mut account_counter = 0;
