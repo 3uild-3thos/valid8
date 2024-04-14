@@ -36,8 +36,8 @@ When you run valid8 with no arguments, it will launch an interactive menu where 
 
     Clone Account: Clone an account from the Solana blockchain.
     Clone Program: Clone a program from the Solana blockchain.
-    Edit Accounts: Manage accounts in your local ledger (future functionality).
-    Edit Programs: Manage programs in your local ledger (future functionality).
+    Edit Accounts: Manage accounts in your local ledger.
+    Edit Programs: Manage programs in your local ledger.
     Exit: Exit the interactive menu.
 
 Clone Account:
@@ -47,6 +47,28 @@ Clone Account:
         If you choose "Custom Network," provide the RPC endpoint URL when prompted.
     Enter the public key of the account you want to clone.
     valid8 will clone the account and store it locally.
+
+Edit Account:
+
+    Select "Edit Account" from the menu.
+    Enter the public key of the account you want to edit when prompted.
+    Change the owner, or the amount of lamports in the account.
+    valid8 will edit the account and store it locally with the changed value.
+
+Clone Program:
+
+    Select "Clone Program" from the menu.
+    Choose a network (mainnet or devnet) or select "Custom Network" to specify a custom RPC endpoint.
+        If you choose "Custom Network," provide the RPC endpoint URL when prompted.
+    Enter the public key of the program you want to clone, the program data account will automatically cloned.
+
+
+Edit Program:
+
+    Select "Edit Program" from the menu.
+    Enter the public key of the program you want to edit when prompted.
+    Change the owner, the amount of lamports, or the upgrade authority of the program.
+    valid8 will edit the program and store it locally with the changed value(s).
 
 Ledger Command:
 
