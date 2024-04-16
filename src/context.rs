@@ -4,6 +4,7 @@ use dialoguer::Select;
 use serde::{Serialize, Deserialize};
 use anyhow::anyhow;
 
+use serde_json::Value;
 use solana_ledger::{
     blockstore::create_new_ledger, 
     blockstore_options::LedgerColumnOptions,
@@ -27,7 +28,8 @@ use solana_sdk::{
 use crate::{common::{
         helpers, project_name::ProjectName, AccountSchema, Network
     }, 
-    config::ConfigJson
+    config::ConfigJson,
+    serialization::b58,
 };
 const MAX_GENESIS_ARCHIVE_UNPACKED_SIZE: u64 = 10 * 1024 * 1024; // 10 MiB from testvalidator source
 /*
@@ -49,13 +51,31 @@ pub struct Valid8Context {
     pub networks: HashSet<Network>,
     pub programs: Vec<AccountSchema>,
     pub accounts: Vec<AccountSchema>,
+    pub overrides: Option<Vec<Override>>,
     pub idls: Vec<String>,
 }
 
+#[derive(Serialize, Deserialize, Default, Debug, Clone)]
+pub struct Override {
+    #[serde(with = "b58")]
+    pub pubkey: Pubkey,
+    pub edit_fields: Vec<EditField>,
+}
+
+impl Override {
+    pub fn new(pubkey: Pubkey, edit_field: EditField) -> Self {
+        Self { pubkey: pubkey, edit_fields: vec![edit_field] }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum EditField{
+    #[serde(with = "b58")]
     Owner(Pubkey),
+    #[serde(with = "b58")]
     UpgradeAuthority(Pubkey),
     Lamports(u64),
+    Data(Value)
 }
 
 impl From<ConfigJson> for Valid8Context {
@@ -78,6 +98,7 @@ impl From<ConfigJson> for Valid8Context {
             programs: programs,
             accounts: accounts,
             idls: value.idls,
+            overrides: value.overrides,
         }
     }
 }
@@ -264,6 +285,37 @@ impl Valid8Context {
         Ok(self.accounts.remove(position))
     }
 
+    pub fn add_override(&mut self, over: Override){
+        if let Some(override_list) = self.overrides.as_mut() {
+            override_list.push(over)
+        } else {
+            self.overrides = Some(vec![over])
+        }
+    }
+
+    pub fn apply_overrides(&mut self) -> Result<()> {
+        if let Some (override_list) = self.overrides.clone() {
+            let _ = override_list.iter().map(|over| {
+                if self.accounts.iter().find(|acc| acc.pubkey == over.pubkey).is_some() {
+                    let _ = over.edit_fields
+                        .iter()
+                        .map(|edit_field| self.edit_account(&over.pubkey, edit_field.clone()))
+                        .collect::<Result<Vec<()>>>();
+                } else if self.programs.iter().find(|acc| acc.pubkey == over.pubkey).is_some() { 
+                    let _ = over.edit_fields
+                        .iter()
+                        .map(|edit_field| self.edit_program(&over.pubkey, edit_field.clone()))
+                        .collect::<Result<Vec<()>>>();
+                } else {
+                    println!("Account not found in context!: {}", over.pubkey);
+
+                }
+            });
+        }
+
+        Ok(())
+    }
+
     pub fn edit_account(&mut self, pubkey: &Pubkey, edit_field: EditField) -> Result<()> {
        
         let mut account = self.get_account(pubkey)?;
@@ -276,10 +328,13 @@ impl Valid8Context {
                 account.owner = new_owner
             },
             EditField::UpgradeAuthority(_new_pubkey) => return Err(anyhow!("No upgrade authoprity on account")),
+            EditField::Data(_) => todo!(),
         }
 
         helpers::save_account_to_disc(&self.project_name, &account)?;
         self.accounts.push(account);
+        self.add_override(Override::new(*pubkey, edit_field));
+        self.try_save_config()?;
         
         Ok(())
     }
@@ -288,26 +343,31 @@ impl Valid8Context {
 
         let mut program_data_account = self.get_account(pubkey)?;
 
-        match edit_field {
+        match &edit_field {
             EditField::Lamports(new_lamports) => {
-                program_data_account.lamports = new_lamports
+                program_data_account.lamports = *new_lamports
             }
             EditField::Owner(new_owner) => {
-                program_data_account.owner = new_owner
+                program_data_account.owner = *new_owner
             },
             EditField::UpgradeAuthority(new_upgrade_auth) => {
                 let new_statue = UpgradeableLoaderState::ProgramData {
                     slot: 0,
-                    upgrade_authority_address: Some(new_upgrade_auth),
+                    upgrade_authority_address: Some(*new_upgrade_auth),
                 };
                 let mut acc = program_data_account.to_account()?;
                 acc.set_state(&new_statue)?;
                 program_data_account = AccountSchema::from_account(&acc, &program_data_account.pubkey, &program_data_account.network)?;
             },
+            EditField::Data(_json_value) => {
+                
+            },
 
         }
         helpers::save_account_to_disc(&self.project_name, &program_data_account)?;
         self.accounts.push(program_data_account);
+        self.add_override(Override::new(*pubkey, edit_field));
+        self.try_save_config()?;
 
         Ok(())
     }

@@ -5,7 +5,7 @@ use std::{collections::HashSet, path::Path, str::FromStr};
 
 use crate::{
     common::{helpers, AccountSchema, Network, ProjectName},
-    context::Valid8Context,
+    context::{Override, Valid8Context},
 };
 use serde::{Deserialize, Serialize};
 
@@ -15,11 +15,12 @@ pub struct ConfigJson {
     pub networks: HashSet<Network>,
     pub programs: Vec<(String, Network)>,
     pub accounts: Vec<(String, Network)>,
+    pub overrides: Option<Vec<Override>>,
     pub idls: Vec<String>,
 }
 
 
-#[allow(unused_variables)]
+#[allow(unused_assignments)]
 impl ConfigJson {
     pub fn to_context(&self) -> Result<Valid8Context> {
         let mut account_counter = 0;
@@ -28,6 +29,7 @@ impl ConfigJson {
             networks: self.networks.clone(),
             programs: vec![],
             accounts: vec![],
+            overrides: self.overrides.clone(),
             idls: self.idls.clone(),
         };
         Valid8Context::create_resources_dir(&new_context.project_name)?;
@@ -64,6 +66,7 @@ impl ConfigJson {
             new_context.accounts.push(program_data);
             account_counter+=2;
         });
+        new_context.apply_overrides()?;
         println!("Accounts installed: {}", account_counter);
 
         Ok(new_context)
@@ -112,6 +115,7 @@ impl From<Valid8Context> for ConfigJson {
             networks: value.networks,
             programs,
             accounts,
+            overrides: value.overrides,
             idls: value.idls,
         }
     }

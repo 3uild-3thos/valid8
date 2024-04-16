@@ -1,6 +1,5 @@
 use anyhow::Result;
-use clap::{ArgAction, Parser, Subcommand, ValueEnum};
-use common::ProjectName;
+use clap::{ArgAction, Parser, ValueEnum};
 use context::Valid8Context;
 
 mod account;

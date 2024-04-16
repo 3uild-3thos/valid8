@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Result};
 use dialoguer::{Input, Select};
+use serde_json::Value;
 use solana_sdk::{
     account_utils::StateMut,
     bpf_loader_upgradeable:: UpgradeableLoaderState,
@@ -57,6 +58,7 @@ pub fn edit(ctx: &mut Valid8Context) -> Result<()> {
         let fields: Vec<String> = vec![
             format!("owner: {}", program_data_account.owner.to_string()),
             format!("lamports: {}", program_data_account.lamports.to_string()),
+            format!("data: {{Value}}"),
             {
                 if let Some(pubkey) = upgrade_authority {
                     format!("upgrade authority: {}", pubkey)
@@ -82,6 +84,10 @@ pub fn edit(ctx: &mut Valid8Context) -> Result<()> {
                 ctx.edit_account(&program_executable_data_address, EditField::Lamports(new_lamports.parse()?))?;
             },
             2 => {
+                let new_data: Value = Input::new().with_prompt("New data as Json Value").interact_text()?;
+                ctx.edit_program(&program_executable_data_address, EditField::Data(new_data))?;
+            },
+            3 => {
                 let new_upgrade_auth: String = Input::new().with_prompt("New upgrade authority pubkey").interact_text()?;
                 ctx.edit_program(&program_executable_data_address, EditField::UpgradeAuthority(Pubkey::from_str(&new_upgrade_auth)?))?;
             }

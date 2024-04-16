@@ -3,8 +3,8 @@
     "name": "valid8"
   },
   "networks": [
-    "mainnet",
-    "devnet"
+    "devnet",
+    "mainnet"
   ],
   "programs": [
     [
@@ -14,13 +14,23 @@
   ],
   "accounts": [
     [
-      "H4qEuH77udFPZQnJnsK1g9bydLXCJoVPcXGkTcNh3eKF",
-      "mainnet"
-    ],
-    [
       "6TDapMxCnEzss5YCJZXZtTSHwe6ZJeWikwvPzLnZvq7m",
       "devnet"
+    ],
+    [
+      "H4qEuH77udFPZQnJnsK1g9bydLXCJoVPcXGkTcNh3eKF",
+      "mainnet"
     ]
+  ],
+  "overrides": [
+    {
+      "pubkey": "H4qEuH77udFPZQnJnsK1g9bydLXCJoVPcXGkTcNh3eKF",
+      "edit_fields": [
+        {
+          "Owner": "HEvSKofvBgfaexv23kMabbYqxasxU3mQ4ibBMEmJWHny"
+        }
+      ]
+    }
   ],
   "idls": [
     "HEvSKofvBgfaexv23kMabbYqxasxU3mQ4ibBMEmJWHny"

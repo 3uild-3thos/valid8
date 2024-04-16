@@ -1,4 +1,4 @@
-// pub mod b58;
+pub mod b58;
 // pub use b58::*;
 
 // pub mod b64;
