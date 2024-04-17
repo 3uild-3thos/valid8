@@ -1,4 +1,4 @@
-use std::{collections::{HashMap, HashSet}, fs::{create_dir_all, File}, io::{Read, Write}, path::{Path, PathBuf}, str::FromStr};
+use std::{collections::{HashMap, HashSet}, fs::{create_dir_all, File}, io::{Read, Write}, path::Path, str::FromStr};
 use anyhow::Result;
 use dialoguer::Select;
 use serde::{Serialize, Deserialize};
@@ -192,10 +192,12 @@ impl Valid8Context {
         Ok((config, installed))
     }
 
-    pub fn try_compose(&self) -> Result<u8> {
+    pub fn try_compose(&self) -> Result<(u8,u32, u32)> {
 
         let mut this_ctx: ConfigJson = self.clone().into();
         let mut compose_count = 0;
+        let mut account_count = 0;
+        let mut program_count = 0;
         let mut new_config_path = self.compose.clone();
 
         while let Some(new_config) = new_config_path.clone() {
@@ -206,11 +208,11 @@ impl Valid8Context {
             let (new_ctx, _) = Valid8Context::try_open_config(&ProjectName::from_str(&new_config.replace(".json", ""))?)?;
 
             new_ctx.accounts.iter().for_each(|new_acc| {
-                if !this_ctx.accounts.contains(new_acc) {this_ctx.accounts.push(new_acc.clone())}
+                if !this_ctx.accounts.contains(new_acc) {this_ctx.accounts.push(new_acc.clone()); account_count+=1}
             });
     
             new_ctx.programs.iter().for_each(|new_prog| {
-                if !this_ctx.programs.contains(new_prog) {this_ctx.programs.push(new_prog.clone())}
+                if !this_ctx.programs.contains(new_prog) {this_ctx.programs.push(new_prog.clone()); program_count+=1}
             });
     
             new_ctx.idls.iter().for_each(|new_idl| {
@@ -233,7 +235,7 @@ impl Valid8Context {
         let new_context = this_ctx.to_context()?;
         new_context.try_save_config()?;
 
-        Ok(compose_count)
+        Ok((compose_count, account_count, program_count))
     }
 
     pub fn has_account(&self, pubkey: &Pubkey) -> bool {

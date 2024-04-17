@@ -69,7 +69,6 @@ impl ConfigJson {
             account_counter+=2;
         });
         new_context.apply_overrides()?;
-        println!("Accounts installed: {}", account_counter);
 
         Ok(new_context)
     }
