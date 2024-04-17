@@ -48,7 +48,7 @@ fn router(cli: &Cli, ctx: &mut Valid8Context) -> Result<()> {
             Commands::Run => todo!(),
             Commands::Edit => commands::edit(ctx)?,
             Commands::Ledger => commands::ledger(ctx, cli.yes.clone())?,
-            Commands::Compose => todo!(),
+            Commands::Compose => commands::compose(ctx)?,
         }
     } else {
         commands::edit(ctx)?

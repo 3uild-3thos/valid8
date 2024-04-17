@@ -36,12 +36,7 @@ pub fn ledger(ctx: &mut Valid8Context, overwrite: bool) -> Result<()> {
     if user_choice {
         println!("Overwiting test-ledger directory");
         fs::remove_dir_all(ledger_path)?;
-
     }
-    
-
     ctx.create_ledger()?;
-    
-
     Ok(())
 }

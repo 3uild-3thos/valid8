@@ -53,9 +53,10 @@ pub struct Valid8Context {
     pub accounts: Vec<AccountSchema>,
     pub overrides: Option<Vec<Override>>,
     pub idls: Vec<String>,
+    pub compose: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Default, Debug, Clone)]
+#[derive(Serialize, Deserialize, Default, Debug, Clone, PartialEq, Eq)]
 pub struct Override {
     #[serde(with = "b58")]
     pub pubkey: Pubkey,
@@ -68,7 +69,7 @@ impl Override {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum EditField{
     #[serde(with = "b58")]
     Owner(Pubkey),
@@ -99,6 +100,7 @@ impl From<ConfigJson> for Valid8Context {
             accounts: accounts,
             idls: value.idls,
             overrides: value.overrides,
+            compose: value.compose,
         }
     }
 }
@@ -178,7 +180,7 @@ impl Valid8Context {
         File::open(Path::new(&project_name.to_config()))
             .and_then(|mut file| file.read_to_end(&mut buf))?;
         let config: ConfigJson = serde_json::from_slice(&buf)?;
-        println!("Opened config {:?}", &config);
+        println!("Config {:?}", &config);
     
         // Convert ConfigJson to Valid8Context, this also tries to read accounts from disc
         let mut installed = true;
@@ -190,16 +192,48 @@ impl Valid8Context {
         Ok((config, installed))
     }
 
-    pub fn try_compose(&self, other_json_path: impl Into<PathBuf>) -> Result<()> {
-        // read other json into a valid8 context struct, something like
-        // maybe you need another function to accept filename, it can be an impl here or in the helpers something
-        // let other = Valid8Context::try_open_config(other_json_path)?;
+    pub fn try_compose(&self) -> Result<u8> {
 
-        // when you read the file, we have 2 valid8 contexts in memory, and the first one is the dominant,
-        // which means you should compare account and programs, see if there is any that's the same, 
-        // and use the one that was in the original context
+        let mut this_ctx: ConfigJson = self.clone().into();
+        let mut compose_count = 0;
+        let mut new_config_path = self.compose.clone();
 
-        Ok(())
+        while let Some(new_config) = new_config_path.clone() {
+            compose_count += 1;
+
+            if compose_count>20{return Err(anyhow!(compose_count))};
+            
+            let (new_ctx, _) = Valid8Context::try_open_config(&ProjectName::from_str(&new_config.replace(".json", ""))?)?;
+
+            new_ctx.accounts.iter().for_each(|new_acc| {
+                if !this_ctx.accounts.contains(new_acc) {this_ctx.accounts.push(new_acc.clone())}
+            });
+    
+            new_ctx.programs.iter().for_each(|new_prog| {
+                if !this_ctx.programs.contains(new_prog) {this_ctx.programs.push(new_prog.clone())}
+            });
+    
+            new_ctx.idls.iter().for_each(|new_idl| {
+                if !this_ctx.idls.contains(new_idl) {this_ctx.idls.push(new_idl.clone())}
+            });
+    
+            new_ctx.networks.iter().for_each(|new_network| {
+                this_ctx.networks.insert(new_network.clone());
+            });
+    
+            if let Some(new_overrides) = new_ctx.overrides {
+                new_overrides.iter().for_each(|new_over| {
+                    if let Some(overrides) = this_ctx.overrides.as_mut(){
+                        if !overrides.contains(new_over) {overrides.push(new_over.clone())}
+                    }
+                });
+            }
+            new_config_path = new_ctx.compose;
+        }
+        let new_context = this_ctx.to_context()?;
+        new_context.try_save_config()?;
+
+        Ok(compose_count)
     }
 
     pub fn has_account(&self, pubkey: &Pubkey) -> bool {
@@ -308,11 +342,9 @@ impl Valid8Context {
                         .collect::<Result<Vec<()>>>();
                 } else {
                     println!("Account not found in context!: {}", over.pubkey);
-
                 }
             });
         }
-
         Ok(())
     }
 

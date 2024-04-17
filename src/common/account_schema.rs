@@ -6,7 +6,7 @@ use solana_sdk::account::Account;
 
 use super::Network;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct AccountSchema {
     pub pubkey: Pubkey,
     pub network: Network,

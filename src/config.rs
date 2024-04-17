@@ -17,6 +17,7 @@ pub struct ConfigJson {
     pub accounts: Vec<(String, Network)>,
     pub overrides: Option<Vec<Override>>,
     pub idls: Vec<String>,
+    pub compose: Option<String>
 }
 
 
@@ -31,6 +32,7 @@ impl ConfigJson {
             accounts: vec![],
             overrides: self.overrides.clone(),
             idls: self.idls.clone(),
+            compose: self.compose.clone(),
         };
         Valid8Context::create_resources_dir(&new_context.project_name)?;
 
@@ -117,6 +119,7 @@ impl From<Valid8Context> for ConfigJson {
             accounts,
             overrides: value.overrides,
             idls: value.idls,
+            compose: value.compose,
         }
     }
 }
