@@ -29,6 +29,7 @@ valid8 [command]
 
     (no argument): Opens an interactive menu for managing accounts and programs.
     ledger (no argument): Generates a local ledger compatible with solana-test-validator.
+    compose (no argument): Composes multiple valid8 config files into one.
 
 ## Interactive Menu:
 
@@ -76,6 +77,13 @@ Ledger Command:
 
 Generates a local ledger compatible with solana-test-validator. You can use this ledger with solana-test-validator to create a test environment and ledger with your cloned accounts and programs pre-loaded.
 (use `-y` to automatically overwrite test-ledger if already exists)
+
+Compose Command:
+
+`valid8 compose`
+
+Composes multiple valid8 configs together, for an even bigger dev environment. 
+To add an extra valid8 config and compose it with your own, just add a filename to the `compose: ` field in your `valid8.json` file.
 
 # Example:
 

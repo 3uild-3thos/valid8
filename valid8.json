@@ -4,21 +4,12 @@
   },
   "networks": [
     "mainnet",
-    "devnet",
-    "https://devnet.helius-rpc.com/?api-key=e4565d31-8f06-40e9-b783-2e42a4e229f1"
+    "devnet"
   ],
   "programs": [
     [
       "HEvSKofvBgfaexv23kMabbYqxasxU3mQ4ibBMEmJWHny",
       "devnet"
-    ],
-    [
-      "p1exdMJcjVao65QdewkaZRUnU6VPSXhus9n2GzWfh98",
-      "mainnet"
-    ],
-    [
-      "hadeK9DLv9eA7ya5KCTqSvSvRZeJC3JgD5a9Y3CNbvu",
-      "mainnet"
     ]
   ],
   "accounts": [
@@ -28,30 +19,6 @@
     ],
     [
       "H4qEuH77udFPZQnJnsK1g9bydLXCJoVPcXGkTcNh3eKF",
-      "mainnet"
-    ],
-    [
-      "9qT3WeLV5o3t3GVgCk9A3mpTRjSb9qBvnfrAsVKLhmU5",
-      "devnet"
-    ],
-    [
-      "tKeYE4wtowRb8yRroZShTipE18YVnqwXjsSAoNsFU6g",
-      "https://devnet.helius-rpc.com/?api-key=e4565d31-8f06-40e9-b783-2e42a4e229f1"
-    ],
-    [
-      "HUZu4xMSHbxTWbkXR6jkGdjvDPJLjrpSNXSoUFBRgjWs",
-      "https://devnet.helius-rpc.com/?api-key=e4565d31-8f06-40e9-b783-2e42a4e229f1"
-    ],
-    [
-      "6TDapMxCnEzss5YCJZXZtTSHwe6ZJeWikwvPzLnZvq7m",
-      "devnet"
-    ],
-    [
-      "99hNSg9acmyg5hWTjw76GoA8k3LG5NvdPXih7sotdmZ7",
-      "mainnet"
-    ],
-    [
-      "5oMS4JgXKeTsdxD26FWuP3BtHB3fLrj8tugkyeARrk5o",
       "mainnet"
     ]
   ],
@@ -66,8 +33,7 @@
     }
   ],
   "idls": [
-    "HEvSKofvBgfaexv23kMabbYqxasxU3mQ4ibBMEmJWHny",
-    "hadeK9DLv9eA7ya5KCTqSvSvRZeJC3JgD5a9Y3CNbvu"
+    "HEvSKofvBgfaexv23kMabbYqxasxU3mQ4ibBMEmJWHny"
   ],
   "compose": "test.json"
 }
