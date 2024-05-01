@@ -29,7 +29,8 @@ valid8 [command]
 
     (no argument): Opens an interactive menu for managing accounts and programs.
     run : Opens the same interactive menu as no arguments
-    ledger (arg: overwrite): Generates a local ledger compatible with solana-test-validator. Overwrite directory if already exists.
+    ledger (arg: overwrite): Generates a local ledger compatible with solana-test-validator. 
+        Overwrite directory if already exists with the `-y` option.
     compose: Compose multiple valid8 config files into one.
 
 ## Interactive Menu:
@@ -71,14 +72,15 @@ Edit Program:
 
     Select "Edit Program" from the menu.
     Enter the public key of the program you want to edit when prompted.
-    Change the owner, the amount of lamports, or the upgrade authority of the program.
+    Change the owner, the amount of lamports, or the upgrade authority of the program, or select Unpack PDA to edit a program related pda account
     valid8 will edit the program and store it locally with the changed value(s).
 
 Ledger Command:
 
 `valid8 ledger`
 
-Generates a local ledger compatible with solana-test-validator. You can use this ledger with solana-test-validator to create a test environment and ledger with your cloned accounts and programs pre-loaded.
+Generates a local ledger compatible with solana-test-validator. 
+You can use this ledger with solana-test-validator to create a test environment and ledger with your cloned accounts and programs pre-loaded.
 (use `-y` to automatically overwrite test-ledger if already exists)
 
 Compose Command:
