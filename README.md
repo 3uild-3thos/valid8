@@ -28,17 +28,20 @@ valid8 [command]
 ## Available Commands:
 
     (no argument): Opens an interactive menu for managing accounts and programs.
-    ledger (no argument): Generates a local ledger compatible with solana-test-validator.
-    compose (no argument): Composes multiple valid8 config files into one.
+    run : Opens the same interactive menu as no arguments
+    ledger (arg: overwrite): Generates a local ledger compatible with solana-test-validator. Overwrite directory if already exists.
+    compose: Compose multiple valid8 config files into one.
 
 ## Interactive Menu:
 
-When you run valid8 with no arguments, it will launch an interactive menu where you can choose from the following options:
+In the interactive menu you can choose from the following options:
 
     Clone Account: Clone an account from the Solana blockchain.
     Clone Program: Clone a program from the Solana blockchain.
     Edit Accounts: Manage accounts in your local ledger.
     Edit Programs: Manage programs in your local ledger.
+    Compose configs: Compose multiple valid8 config files into one.
+    Generate Ledger: Generates a local ledger compatible with solana-test-validator.
     Exit: Exit the interactive menu.
 
 Clone Account:
