@@ -37,10 +37,10 @@ impl AccountSchema {
         })
     }
 
-    pub fn to_account(&self) -> Result<Account> {
+    pub fn to_account(self) -> Result<Account> {
         Ok(Account {
             lamports: self.lamports,
-            data: self.data.clone(),
+            data: self.data,
             owner: self.owner,
             executable: self.executable,
             rent_epoch: self.rent_epoch,

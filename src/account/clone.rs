@@ -20,6 +20,7 @@ pub fn clone(ctx: &mut Valid8Context) -> Result<()> {
         }
     }
 
-    let pubkey = address.ok_or(anyhow!("Public key not defined"))?; 
+    let pubkey = address.ok_or(anyhow!("Public key not defined"))?;
+    
     ctx.add_account(&network, &pubkey)
 }

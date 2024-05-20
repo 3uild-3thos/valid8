@@ -34,18 +34,18 @@ enum Commands {
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    let mut ctx = Valid8Context::init(None)?;
+    let ctx = Valid8Context::init()?;
 
-    router(&cli, &mut ctx)
+    router(&cli, ctx)
 
 }
 
-fn router(cli: &Cli, ctx: &mut Valid8Context) -> Result<()> {
+fn router(cli: &Cli, mut ctx: Valid8Context) -> Result<()> {
 
     if let Some(c) = &cli.command {
         match c {
             Commands::Run => commands::run(ctx)?,
-            Commands::Edit => commands::edit(ctx)?,
+            Commands::Edit => commands::edit(&mut ctx)?,
             Commands::Ledger{overwrite_if_exists} => commands::ledger(ctx, overwrite_if_exists)?,
             Commands::Compose => commands::compose(ctx)?,
         }

@@ -125,6 +125,7 @@ impl IdlAccountField {
                             field_len: 0,
                             orig_idl_field: IdlField { name: "".into(), docs: None, ty: *idl_type.clone() },
                         };
+
                         buf.extend_from_slice(&gen_field.to_bytes()?);
                         Ok(())
                     }).collect::<Result<Vec<()>>>()?;
@@ -212,7 +213,7 @@ pub fn unpack_idl_account(idl_type_def: &IdlTypeDefinition, data: Vec<u8>) -> Re
         Struct { fields } => {
             let mut offset = 0usize;
             for field in fields {
-                let mut idl_field = unpack_idl_field(field)?;
+                let mut idl_field = unpack_idl_field(field);
                 if let Some(data_slice) = &data.get(offset..offset + idl_field.field_len) {
                     idl_field.value = Some(unpack_data_idl_type(&idl_field.orig_idl_field.ty, data_slice)?);
                     offset += &idl_field.field_len;
@@ -225,15 +226,13 @@ pub fn unpack_idl_account(idl_type_def: &IdlTypeDefinition, data: Vec<u8>) -> Re
     }
 }
 
-pub fn unpack_idl_field(idl_field: IdlField) -> Result<IdlAccountField> {
-
-    let unpacked = IdlAccountField {
+pub fn unpack_idl_field(idl_field: IdlField) -> IdlAccountField {
+    IdlAccountField {
         name: idl_field.name.clone(),
         value: None,
         field_len: idl_type_len(&idl_field.ty),
         orig_idl_field: idl_field
-    };
-    Ok(unpacked)
+    }
 }
 
 pub fn idl_type_len(idl_type: &IdlType) -> usize {

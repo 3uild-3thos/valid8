@@ -4,7 +4,7 @@ use dialoguer::Input;
 
 use crate::context::Valid8Context;
 
-pub fn ledger(ctx: &mut Valid8Context, overwrite: &Option<String>) -> Result<()> {
+pub fn ledger(ctx: Valid8Context, overwrite: &Option<String>) -> Result<()> {
 
     let ledger_path = Path::new("test-ledger");
 

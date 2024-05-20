@@ -1,6 +1,7 @@
 use std::{collections::{HashMap, HashSet}, fs::{create_dir_all, File}, io::{Read, Write}, path::Path, str::FromStr};
 use anyhow::Result;
 use dialoguer::{Input, Select};
+use rayon::iter::SkipAnyWhile;
 use serde::{Serialize, Deserialize};
 use anyhow::anyhow;
 use serde_json::Value;
@@ -100,30 +101,16 @@ impl From<ConfigJson> for Valid8Context {
 
 impl Valid8Context {
 
-    pub fn init(name: Option<String>) -> Result<Valid8Context>{
-        let mut project_name = ProjectName::default();
-        if let Some(name) =  name {
-            project_name = ProjectName::from_str(&name)?;
-        }
+    pub fn init() -> Result<Valid8Context>{
+        let project_name = ProjectName::default();
         
         if let Ok((config, installed)) = Self::try_open_config(&project_name) {
             if !installed {
-                let items = vec!["Install"];
+                let choice: String = Input::new().with_prompt("Install Accounts to local?[y/n]").interact_text()?;
 
-                let selection = Select::new()
-                    .with_prompt("Accounts not yet installed, select install, or press ESC to exit?")
-                    .items(&items)
-                    .interact_opt()?;
-
-                if let Some(n) = selection {
-                    match n {
-                        0 => {Ok(
-                            config.to_context()?
-                        )},
-                        _ => Err(anyhow!("Invalid option. Exit.")),
-                    }
-                } else {
-                    Err(anyhow!("Accounts not installed. Exit"))
+                match choice.as_str() {
+                    "y" => Ok(config.to_context()?),
+                    "n" | _ => Err(anyhow!("Accounts not installed")),
                 }
 
             } else {
@@ -136,13 +123,11 @@ impl Valid8Context {
     }
 
     pub fn create_resources_dir(project_name: &ProjectName) -> Result<()> {
-        create_dir_all(Path::new(&project_name.to_resources()))?;
-        Ok(())
+        create_dir_all(Path::new(&project_name.to_resources())).map_err(|e| anyhow!(e))
     }
 
     pub fn create_project_config(project_name: &ProjectName) -> Result<File> {
-        let file = File::create(Path::new(&project_name.to_config()))?;
-        Ok(file)
+        File::create(Path::new(&project_name.to_config())).map_err(|e| anyhow!(e))
     }
 
     pub fn try_init_config(project_name: &ProjectName) -> Result<Self> {
@@ -162,11 +147,10 @@ impl Valid8Context {
     }
 
     pub fn try_save_config(&self) -> Result<()> {
-
         let pretty_string = serde_json::to_string_pretty(&ConfigJson::from(self.clone()))?;
         File::create(Path::new(&self.project_name.to_config()))
-            .and_then(|mut file|file.write_all(pretty_string.as_bytes()))?;
-        Ok(())
+            .and_then(|mut file|file.write_all(pretty_string.as_bytes()))
+            .map_err(|e| anyhow!(e))
     }
 
     pub fn try_open_config(project_name: &ProjectName) -> Result<(ConfigJson, bool)> {
@@ -186,15 +170,15 @@ impl Valid8Context {
         Ok((config, installed))
     }
 
-    pub fn try_compose(&self) -> Result<(u8,u32, u32)> {
+    pub fn try_compose(self) -> Result<(u8, u32, u32)> {
 
-        let mut this_ctx: ConfigJson = self.clone().into();
+        let mut new_config_path = self.compose.clone();
+        let mut this_ctx: ConfigJson = self.into();
         let mut compose_count = 0;
         let mut account_count = 0;
         let mut program_count = 0;
-        let mut new_config_path = self.compose.clone();
 
-        while let Some(new_config) = new_config_path.clone() {
+        while let Some(new_config) = new_config_path {
             compose_count += 1;
 
             if compose_count>20{return Err(anyhow!(compose_count))};
@@ -428,9 +412,10 @@ impl Valid8Context {
                     slot: 0,
                     upgrade_authority_address: Some(*new_upgrade_auth),
                 };
+                let network = &program_data.network.clone();
                 let mut acc = program_data.to_account()?;
                 acc.set_state(&new_statue)?;
-                program_data = AccountSchema::from_account(&acc, program_data_account, &program_data.network)?;
+                program_data = AccountSchema::from_account(&acc, program_data_account, network)?;
             },
             EditField::UnpackTokenAccount => { },
             EditField::UnpackPDA => {
@@ -455,7 +440,7 @@ impl Valid8Context {
                                 format!("{}: {:?}",field.name, field.value)
                             }).collect::<Vec<String>>();
 
-                                                        let selection = Select::new()
+                            let selection = Select::new()
                                 .with_prompt("Select PDA field to edit.")
                                 .items(&account_fields)
                                 .interact_opt()?;
@@ -505,7 +490,7 @@ impl Valid8Context {
         Ok(())
     }
 
-    pub fn create_ledger(&self) -> Result<()> {
+    pub fn create_ledger(self) -> Result<()> {
 
         // create a solana-test-validator compatible ledger directory with account and programs added
         let mint_address = Keypair::new();
@@ -521,13 +506,19 @@ impl Valid8Context {
 
         let mut accounts: HashMap<Pubkey, AccountSharedData> = HashMap::new();
 
-        for program in &self.programs {
-            accounts.insert(program.pubkey, AccountSharedData::from(program.to_account()?));
-        }
-        
-        for account in &self.accounts {
-            accounts.insert(account.pubkey, AccountSharedData::from(account.to_account()?));
-        }
+        let _ = self.programs
+            .into_iter()
+            .map(|pa|{
+                let _ = accounts.insert(pa.pubkey, AccountSharedData::from(pa.to_account()?));
+                Ok(())
+            }).collect::<Result<Vec<()>>>()?;
+
+        let _ = self.accounts
+            .into_iter()
+            .map(|a|{
+                let _ = accounts.insert(a.pubkey, AccountSharedData::from(a.to_account()?));
+                Ok(())
+            }).collect::<Result<Vec<()>>>()?;
 
         accounts.insert(
             faucet_keypair.pubkey(), 

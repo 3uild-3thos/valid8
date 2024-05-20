@@ -48,7 +48,7 @@ pub fn edit(ctx: &mut Valid8Context) -> Result<()> {
         let upgrade_authority = if let Ok(UpgradeableLoaderState::ProgramData {
             upgrade_authority_address,
             slot: _,
-        }) = program_data_account.to_account()?.state()
+        }) = program_data_account.clone().to_account()?.state()
         {
             upgrade_authority_address
         } else {
