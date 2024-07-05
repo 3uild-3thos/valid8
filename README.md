@@ -10,7 +10,6 @@ Clone the repository:
 
 `git clone https://github.com/.../valid8.git`
 
-
 Navigate to the project directory:
 `cd valid8`
 
@@ -18,6 +17,10 @@ Build valid8:
 `cargo build --release`
 
 This will create a binary named valid8 in the target/release directory. You can copy the binary to a location in your PATH for easier access.
+
+In order to compile, you may also need to install libclang-dev:
+
+`sudo apt-get install libclang-dev`
 
 # Usage
 
@@ -29,7 +32,7 @@ valid8 [command]
 
     (no argument): Opens an interactive menu for managing accounts and programs.
     run : Opens the same interactive menu as no arguments
-    ledger (arg: overwrite): Generates a local ledger compatible with solana-test-validator. 
+    ledger (arg: overwrite): Generates a local ledger compatible with solana-test-validator.
         Overwrite directory if already exists with the `-y` option.
     compose: Compose multiple valid8 config files into one.
 
@@ -67,7 +70,6 @@ Clone Program:
         If you choose "Custom Network," provide the RPC endpoint URL when prompted.
     Enter the public key of the program you want to clone, the program data account will automatically cloned.
 
-
 Edit Program:
 
     Select "Edit Program" from the menu.
@@ -79,7 +81,7 @@ Ledger Command:
 
 `valid8 ledger`
 
-Generates a local ledger compatible with solana-test-validator. 
+Generates a local ledger compatible with solana-test-validator.
 You can use this ledger with solana-test-validator to create a test environment and ledger with your cloned accounts and programs pre-loaded.
 (use `-y` to automatically overwrite test-ledger if already exists)
 
@@ -87,12 +89,13 @@ Compose Command:
 
 `valid8 compose`
 
-Composes multiple valid8 configs together, for an even bigger dev environment. 
+Composes multiple valid8 configs together, for an even bigger dev environment.
 To add an extra valid8 config and compose it with your own, just add a filename to the `compose: ` field in your `valid8.json` file.
 
 # Example:
 
 ## Open the interactive menu
+
 `valid8`
 
 1. Select "Clone Account"
@@ -100,9 +103,11 @@ To add an extra valid8 config and compose it with your own, just add a filename 
 3. Enter the public key of the account to clone
 
 ## Generate a local ledger
-`valid8 ledger -y`
+
+`valid8 ledger -- -y`
 
 ## Start solana-test-validator
-`solana-test-validator` 
+
+`solana-test-validator`
 
 This will create a local ledger and run it with the cloned accounts available for testing.
