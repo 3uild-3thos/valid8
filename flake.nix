@@ -17,28 +17,25 @@
           overlays = [ (import rust-overlay) ];
         };
         let
-          rust = makeRustPlatform {
-            cargo = rust-bin.stable."1.79.0".default;
-            rustc = rust-bin.stable."1.79.0".default;
+          rust = rust-bin.stable."1.79.0".default;
+          rustPlatform = makeRustPlatform {
+            cargo = rust;
+            rustc = rust;
           };
-        in {
-          packages.default = rust.buildRustPackage {
+          valid8 = rustPlatform.buildRustPackage {
             name = "valid8";
             version = "v0.0.3";
             src = ./.;
-            cargoHash = "";
-            buildInputs = [ libiconv pkg-config gcc ]
+            cargoHash = "sha256-o4OGFNO0wkjR4tdU5yl3Eu9CG1eCKYOm2aEenEoda3o=";
+            nativeBuildInputs = [ pkg-config perl ];
+            buildInputs = [ openssl.dev libiconv ]
               ++ lib.optionals stdenv.isDarwin
               (with darwin.apple_sdk.frameworks; [
-                System
                 Security
                 SystemConfiguration
-                CoreFoundation
-                CoreServices
-                Foundation
               ]);
           };
-        };
+        in { packages.default = valid8; };
 
     };
 }
