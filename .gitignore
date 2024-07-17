@@ -2,7 +2,6 @@
 target
 .env
 .valid8
-Cargo.lock
 __valid8.json
 _valid8.json
 valid8-cli
