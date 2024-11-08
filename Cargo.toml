@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["Dean 利迪恩", "bergabman"]
 
 [dependencies]
-anyhow = "1.0.81"
+anyhow = "1.0.93"
 base64 = "0.22.0"
 bs58 = "0.5.1"
 clap = { version = "4.4.8", features = ["derive", "cargo"] }
